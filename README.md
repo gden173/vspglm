@@ -108,3 +108,38 @@ ans =
     2.4007
    -0.6670
 ```
+
+#### Hunua
+
+```matlab
+hunua = readtable('hunua.txt');
+x = [ones(size(hunua, 1), 1), hunua.altitude * 10^3];
+X = {x,x,x};
+Y = {hunua.cyadea, hunua.beitaw,hunua.kniexc};
+links = {'logit', 'logit', 'logit'};
+[betas, maxLogLike, phat, iter] = vspglm(Y, X, links);
+>> betas{1}
+
+ans =
+
+   -0.7547
+    0.0003
+
+>> betas{2}
+
+ans =
+
+   -1.0478
+    0.0041
+
+>> betas{3}
+
+ans =
+
+   -0.0686
+    0.0027
+```
+
+The paper On generalized estimating equations for vector regression by Huang (2016) has these parameters  as
+
+![](C:\Users\gabri\Dropbox\sem2_2020\honours\code\vspglm\hunua.PNG)
