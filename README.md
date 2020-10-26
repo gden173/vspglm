@@ -1,6 +1,26 @@
 #  vspglm
 All MATLAB Code and examples related to a Semi-Parametric Vector Generalized Linear Model Solver. The univariate case of this method was first proposed by Huang (2014) in Joint Estimation of the Mean and Error Distribution in Generalized Linear Models https://doi.org/10.1080/01621459.2013.824892
 
+This method rewrites the density of each observation $\vec{y}_{i} \in \mathbb{R}^{K}$ using its exponential tilt form 
+$$
+dF_i(\vec{y}) = \exp\Big\{b_i + \langle \vec{\theta}_i, \vec{y}\rangle\Big\}dF(\vec{y})
+$$
+
+
+In this model we maximize the empirical  log likelihood 
+$$
+\ell = \sum_{i = 1}^{n} \ln p_i + b_i + \langle \vec{\theta}_i, \vec{y}_i\rangle
+$$
+Subject to $n$ normalizing constraints
+$$
+1 = \sum_{i = 1}^{n} \exp \Big\{ \ln p_i + b_j + \langle \vec{\theta}_j, \vec{y}_i\rangle \Big\} \  \ j = 1,2,\dots, n
+$$
+And $n \times k$ mean constraints, for $y_i \in \mathbb{R}^K$ 
+$$
+\eta_j(\vec{x}_{kj}^T\beta_j) = \sum_{i = 1}^{n} y_{ij}\exp \Big\{ \ln p_i + b_i + \langle \vec{\theta}_i, \vec{y}_i\rangle \Big\}  \  \ \forall  \ k = 1, \dots, n, \  \ j = 1,\dots, K
+$$
+
+
 
 
 ### Usage 
