@@ -51,14 +51,9 @@ links = {'log'};
 ```
 
 ```matlab
->> betas{1}
-
-ans =
-
-   -3.1096
-   -0.0018
-    0.0564
-   -0.0416
+Running VSPGLM: 
+Fitted Model Found: 
+log(Y_1) ~ -3.109558x_0-0.001821x_1+0.056418x_2-0.041640x_3
 
 ```
 
@@ -106,14 +101,9 @@ x1 =[1 0 3.36 0;
 ```
 
 ```matlab
->> betas{1}
-
-ans =
-
-    7.6466
-   -3.1368
-   -0.9016
-    0.5081
+Running VSPGLM: 
+Fitted Model Found: 
+log(Y_1) ~ 7.646558x_0-3.136820x_1-0.901633x_2+0.508127x_3
 
 ```
 
@@ -131,14 +121,9 @@ links = {'inv'};
 ```
 
 ```matlab
->> betas{1}
-
-ans =
-
-   -0.0168
-   -0.0057
-    0.0157
-    0.0073
+Running VSPGLM: 
+Fitted Model Found: 
+1/(Y_1) ~ -0.016819x_0-0.005672x_1+0.015716x_2+0.007264x_3
 
 ```
 
@@ -167,22 +152,13 @@ links = {'logit', 'id'};
 [betas, maxLogLike, phat, iter] = vspglm(Y, X, links);
 ```
 
-The resulting parameters are 
+The resulting models are
 
 ```matlab
->> betas{1}
-
-ans =
-
-    3.5102
-   -0.0387
-
->> betas{2}
-
-ans =
-
-    6.7550
-   -0.0019
+Running VSPGLM: 
+Fitted Model Found: 
+log((Y_1)/(1 - Y_1)) ~ 3.510173x_0-0.038698x_1
+Y_2 ~ 6.755042x_0-0.001861x_1
 ```
 
 #### UN
@@ -199,19 +175,10 @@ links = {'id', 'id'};
 ```
 
 ```matlab
->> betas{1}
-
-ans =
-
-    6.9924
-    0.0730
-
->> betas{2}
-
-ans =
-
-    1.7219
-   -0.0125
+Running VSPGLM: 
+Fitted Model Found: 
+Y_1 ~ 6.992423x_0+0.073030x_1
+Y_2 ~ 1.721854x_0-0.012512x_1
 ```
 
 #### Rossner
@@ -233,19 +200,10 @@ links = {'id', 'id'};
 ```
 
 ```matlab
->> betas{1}
-
-ans =
-
-    2.1958
-   -0.2029
-
->> betas{2}
-
-ans =
-
-    2.4007
-   -0.6670
+Running VSPGLM: 
+Fitted Model Found: 
+Y_1 ~ 2.195763x_0-0.202929x_1
+Y_2 ~ 2.400669x_0-0.667040x_1
 ```
 
 #### Hunua
@@ -257,28 +215,19 @@ X = {x,x,x};
 Y = {hunu.cyadea, hunu.beitaw,hunu.kniexc};
 links = {'log', 'log', 'log'};
 [betas, maxLogLike, phat, iter] = vspglm(Y, X, links);
->> betas{1}
 
-ans =
-
-  -1.133180512140476
-   0.000127128853883
-
->> betas{2}
-
-ans =
-
-  -1.232097853708090
-   0.001866814929861
-
->> betas{3}
-
-ans =
-
-  -0.623759122727414
-   0.000535509549816
 ```
 
-The paper On generalized estimating equations for vector regression by Huang (2016) has these parameters  as
+```matlab
+Running VSPGLM: 
+Fitted Model Found: 
+log(Y_1) ~ -1.133181x_0+0.000127x_1
+log(Y_2) ~ -1.232098x_0+0.001867x_1
+log(Y_3) ~ -0.623759x_0+0.000536x_1
+```
+
+
+
+
 
 ![](C:\Users\gabri\Dropbox\sem2_2020\honours\code\vspglm\hunua.PNG)

@@ -64,6 +64,7 @@ function [betas, maxLogLike, phat, iter] = vspglm(Y, X, links)
              'Display', 'off', 'GradConstr', 'on', 'GradObj', 'on') ;
 
      % Optimize
+     fprintf("Running VSPGLM: \n")
     [param, fvalue, exitflag, output,...
         ~] = fmincon(likelihood, param0,...
                                 [], [], [], [], [], [],constraint, options) ;
@@ -74,6 +75,30 @@ function [betas, maxLogLike, phat, iter] = vspglm(Y, X, links)
     maxLogLike= -fvalue ;    
     iter = output.iterations;
     
+    % Print the fitted model in a formatted way
+    fprintf("Fitted Model Found: \n")
+   
+    
+    for i = 1:K
+        switch links{i}
+            case 'id'
+                mu = sprintf("Y_%d", i);
+            case 'inv'
+                mu = sprintf("1/(Y_%d)", i);
+            case 'log'
+                mu = sprintf("log(Y_%d)", i);
+            case 'logit'
+                mu = sprintf("log((Y_%d)/(1 - Y_%d))", i, i);
+        end
+        bs = betas{i};       
+        linear = sprintf("%fx_0",bs(1));
+        for j = 1:(dims(i)-1)
+            linear = linear + sprintf("%s%fx_%d",sgn(bs(j  +1)),...
+            abs(bs(j + 1)) ,j);
+        end
+        fprintf("%s ~ %s\n", mu, linear)
+    end
+        
 
     
 end
@@ -120,4 +145,12 @@ function [betas] = initialBetas(Y, links, dims)
         end
         betas{i} = [vals{i}; zeros(dims(i) - 1, 1)];
     end        
- end
+end
+
+function s = sgn(x)
+    if x>=0
+        s = "+";
+    else
+        s = "-";
+    end
+end
