@@ -52,6 +52,7 @@ function [betas, maxLogLike, phat, iter] = vspglm(Y, X, links)
     thetas = zeros(N * K,1);
     
     % Initial Parameter vector
+      
     param0 = [ reshape(cell2mat(beta0), [sum(dims), 1]);logp0;b0;thetas];
     
     % Functions to pass data to
@@ -61,21 +62,32 @@ function [betas, maxLogLike, phat, iter] = vspglm(Y, X, links)
         % Set options for FMINCON
     options = optimset('MaxFunEvals',1e5, 'MaxIter', 1e5, 'TolFun', 1e-8,...
              'TolCon', 1e-8, 'TolX', 1e-8, 'Algorithm', 'interior-point',...
-             'Display', 'off', 'GradConstr', 'on', 'GradObj', 'on') ;
+             'Display', 'off', 'GradConstr', 'on', 'GradObj', 'on', ...
+             'SubproblemAlgorithm', 'cg') ;
 
      % Optimize
      fprintf("Running VSPGLM: \n")
+     tic
+     
     [param, fvalue, exitflag, output,...
         ~] = fmincon(likelihood, param0,...
                                 [], [], [], [], [], [],constraint, options) ;
 
     % Fitted model properties
-    [logp, ~, ~,betas]= extractParam(param, N, dims);
-    phat = exp(logp);   
+    [logp, b, thetas ,betas]= extractParam(param, N, dims);      
+    
+    % Output the different tilts at each observations
+    thetaY = cellfun(@(x,y) x.*y.', thetas, Y, 'UniformOutput', false);
+    thetaYSum = sum(reshape(cell2mat(thetaY), [N,N,K]), 3);
+    phat = exp(logp.' + b + thetaYSum);
+    
     maxLogLike= -fvalue ;    
-    iter = output.iterations;
+    iter = output.iterations;   
+    
     
     % Print the fitted model in a formatted way
+    time = toc;
+    fprintf("VSPGLM converged in %.3f seconds \n", time)
     fprintf("Fitted Model Found: \n")
    
     
@@ -91,7 +103,7 @@ function [betas, maxLogLike, phat, iter] = vspglm(Y, X, links)
                 mu = sprintf("log((Y_%d)/(1 - Y_%d))", i, i);
         end
         bs = betas{i};       
-        linear = sprintf("%fx_0",bs(1));
+        linear = sprintf("%.3fx_0",bs(1));
         for j = 1:(dims(i)-1)
             linear = linear + sprintf("%s%fx_%d",sgn(bs(j  +1)),...
             abs(bs(j + 1)) ,j);
@@ -126,7 +138,7 @@ function [betas] = initialBetas(Y, links, dims)
     vals = cell(1,length(dims));
     
     % Cell array to store betas in 
-    betas = cell(1,length(dims));
+    betas = cell(length(dims), 1);
     
     % Loop through and calculate initial value
     for i = 1:length(dims)

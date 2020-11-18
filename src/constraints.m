@@ -4,8 +4,8 @@ function [c, ceq, gradc, gradceq] = constraints(param,X,Y,links)
 % for fmincons optimization. The gradients of each constraint 
 % are also computed and returned.
 % The arguments to this function are 
-% param = [logp, b, theta1, theta2, beta1, beta2] which is of dimension
-% 1 x (4 * N + dims(1) + dims(2))
+% param = [betas, logp, b, thetas] which is of dimension
+% 1 x (4 * N + sum(dims))
 
 % Extract the parameters
 [~, dims] = cellfun(@size, X);
