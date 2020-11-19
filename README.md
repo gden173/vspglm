@@ -32,6 +32,7 @@ Current usage examples
 #### Mine Fracture Data Set
 
 ```matlab
+%% MINE FRACTURE DATSET from Myers et. al. (2010)
 x1 = [50,230,125,75,70,65,65,350,350,160,145,145,180,43,42,42,45,83,300,...
     190,145,510,65,470,300,275,420,65,40,900,95,40,140,150,80,80,145,100,...
     150,150,210,11,100,50]' ;
@@ -39,21 +40,46 @@ x2 = [70,65,70,65,65,70,60,60,90,80,65,85,70,80,85,85,85,85,65,90,90,80,75,...
     90,80,90,50,80,75,90,88,85,90,50,60,85,65,65,80,80,75,75,65,88]' ;
 x4 = [1,6,1,0.5,0.5,3,1,0.5,0.5,0,10,0,2,0,12,0,0,10,10,6,12,10,5,9,9,4,17,...
     15,15,35,20,10,7,5,5,5,9,9,3,0,2,0,25,20]' ;
-intercept = ones(44,1) ;
-xx = [intercept, x1, x2, x4] ;
+xx = [x1, x2, x4] ;
 y = [2,1,0,4,1,2,0,0,4,4,1,4,1,5,2,5,5,5,0,5,1,1,3,3,2,2,0,1,5,2,3,3,3,...
     0,0,2,0,0,3,2,3,5,0,3]' ;
 % Data for model
 X = {xx};
 Y = {y};
 links = {'log'};
-[betas, maxLogLike, phat, iter] = vspglm(Y, X, links);
+min_model = fit_vspglm(Y, X, links);
 ```
 
 ```matlab
 Running VSPGLM: 
-Fitted Model Found: 
-log(Y_1) ~ -3.109558x_0-0.001821x_1+0.056418x_2-0.041640x_3
+VSPGLM converged in 0.578 seconds 
+
+
+
+ Semi-Parametric Vector Generalized Linear Regression Model: 
+ 
+         fmincon converged in 48 iterations. 
+         Linear Predictors are unconstrained. 
+ 
+         Model 1: 
+               log(y) ~ 1 + x1 + x2 + x3  
+               Link = log 
+ 
+Estimated Coefficients: 
+         Model 1:  Response: y 
+                   Estimates 
+                   __________
+
+    (intercept)       -3.1096
+    x1             -0.0018214
+    x2               0.056418
+    x3               -0.04164
+
+
+Number of Observations: 44 
+Degrees of Freedom: 40 
+Log-Likelihood: -149.526613 
+F-Statistic vs constant model: 0.959100 , P-value:0.551646
 
 ```
 
@@ -97,33 +123,84 @@ x1 =[1 0 3.36 0;
  
  y = [65; 156; 100; 134; 16; 108; 121; 4; 39; 143; 56; 26; 22; 1; 1; 5;
      65; 56; 65; 17; 7; 16; 22; 3; 4; 2; 3; 8; 4;3; 30; 4; 43];
- [betas, maxLogLike, phat, iter] = vspglm({y}, {x1}, {'log'});
+leuk_model = fit_vspglm({y}, {x1(:, 2:end)}, {'log'});
 ```
 
 ```matlab
 Running VSPGLM: 
-Fitted Model Found: 
-log(Y_1) ~ 7.646558x_0-3.136820x_1-0.901633x_2+0.508127x_3
+VSPGLM converged in 0.342 seconds 
+
+
+
+ Semi-Parametric Vector Generalized Linear Regression Model: 
+ 
+         fmincon converged in 37 iterations. 
+         Linear Predictors are unconstrained. 
+ 
+         Model 1: 
+               log(y) ~ 1 + x1 + x2 + x3  
+               Link = log 
+ 
+Estimated Coefficients: 
+         Model 1:  Response: y 
+                   Estimates
+                   _________
+
+    (intercept)      7.6466 
+    x1              -3.1368 
+    x2             -0.90163 
+    x3              0.50813 
+
+
+Number of Observations: 33 
+Degrees of Freedom: 29 
+Log-Likelihood: -103.234539 
+F-Statistic vs constant model: 1.095928 , P-value:0.398709
 
 ```
 
 ### Blood Clot
 
 ```matlab
- BLOOD CLOT DATASET from McCullagh and Nelder (1989)
+%BLOOD CLOT DATASET from McCullagh and Nelder (1989)
 % blood-clot example from MN1989
 u = [5,10,15,20,30,40,60,80,100,5,10,15,20,30,40,60,80,100]';
 time = [118,58,42,35,27,25,21,19,18,69,35,26,21,18,16,13,12,12]';
 lot = [zeros(1,9),ones(1,9)]';
-X = {[ones(18,1),lot,log(u),lot.*log(u)]} ;
+X = {[lot,log(u),lot.*log(u)]} ;
 links = {'inv'};
-[betas, maxLogLike, phat, iter] = vspglm({time}, X, links);
+clot_model = fit_vspglm({time}, X, links);
 ```
 
 ```matlab
 Running VSPGLM: 
-Fitted Model Found: 
-1/(Y_1) ~ -0.016819x_0-0.005672x_1+0.015716x_2+0.007264x_3
+VSPGLM converged in 0.434 seconds 
+
+
+
+ Semi-Parametric Vector Generalized Linear Regression Model: 
+ 
+         fmincon converged in 60 iterations. 
+         Linear Predictors are unconstrained.
+ 
+         Model 1: 
+               1/y ~ 1 + x1 + x2 + x3  
+               Link = inv 
+ 
+Estimated Coefficients: 
+         Model 1:  Response: y 
+                   Estimates
+                   _________
+
+    (intercept)    -0.016819
+    x1             -0.005672
+    x2              0.015716
+    x3             0.0072635
+
+
+Number of Observations: 18 
+Degrees of Freedom: 14 
+Log-Likelihood: -11.128060 
 
 ```
 
@@ -168,18 +245,52 @@ Y_2 ~ 6.593x_0+0.002236x_1
 un = readtable('UN2.txt');
 
 % Create Design matrices
-N = size(un, 1);
-X = {[ones(N, 1), un.Purban],[ones(N, 1), un.Purban]};
-Y = {un.logPPgdp, un.logFertility};
+X = {un(:,3),un(:,3)};
+Y = {un(:,1), un(:,2)};
 links = {'id', 'id'};
-[betas, maxLogLike, phat, iter] = vspglm(Y, X, links);
+un_model = fit_vspglm(Y, X, links);
+
 ```
 
 ```matlab
 Running VSPGLM: 
-Fitted Model Found: 
-Y_1 ~ 6.992423x_0+0.073030x_1
-Y_2 ~ 1.721854x_0-0.012512x_1
+VSPGLM converged in 6.646 seconds 
+
+
+
+ Semi-Parametric Vector Generalized Linear Regression Model: 
+ 
+         fmincon converged in 42 iterations. 
+         Linear Predictors are unconstrained. 
+ 
+         Model 1: 
+               logPPgdp ~ 1 + Purban 
+               Link = id 
+          Model 2: 
+               logFertility ~ 1 + Purban 
+               Link = id 
+ 
+Estimated Coefficients: 
+         Model 1:  Response: logPPgdp 
+                   Estimates
+                   _________
+
+    (intercept)      6.9924 
+    Purban          0.07303 
+
+
+         Model 2:  Response: logFertility 
+                   Estimates
+                   _________
+
+    (intercept)       1.7219
+    Purban         -0.012512
+
+
+Number of Observations: 386 
+Degrees of Freedom: 382 
+Log-Likelihood: -933.224765 
+F-Statistic vs constant model: 0.409191 , P-value:1.000000
 ```
 
 #### Rossner
