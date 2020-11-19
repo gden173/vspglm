@@ -20,7 +20,7 @@ function [logLike, grad] = logLikelihood(params, Y, dims)
     K  = length(Y);
     
     % Parameters
-    [logp, b, thetas, ~] = extractParam(params, N, dims);
+    [logp, b, thetas, ~] = extractParam(params, N,K, dims);
     
     % Calculate the Likelihood
     logLike = -sum(logp + b) - sum(cellfun(@(theta, y) dot(y, theta),...

@@ -1,4 +1,4 @@
-function [betas, maxLogLike, phat, iter] = vspglm(Y, X, links)
+function [betas, maxLogLike, phat, iter] = vspglm(Y, X, links, cons)
     %[betas, maxLogLike, phat] = vspglm(Y, X, links)
     % Use the method proposed by Huang (2014) in 
     % Joint Estimation of the Mean and Error Distribution in 
@@ -14,6 +14,14 @@ function [betas, maxLogLike, phat, iter] = vspglm(Y, X, links)
     %                   'inv' ->  1/mu = XB
     %                   'log' -> log(mu) = XB
     %                   'logit' -> log(mu/(1-mu)) = XB
+    % cons, either the keyword "equal" meaning that linear
+    % predictors should be shared among all response variables or
+    % "symmetric" meaning that if 2N = K, then the first N responses should
+    % share linear predictors, and the second N responses should share the
+    % second set of linear predictors.  Errors will be thrown if different
+    % link functions are specified for responses which are constrained to
+    % have the same linear predictors
+    % 
     % Returns:
     % betas, 1 x K cell array of q_i x  1 column vectors of linear
     %        predictors   i = 1, 2, .., K
@@ -30,12 +38,61 @@ function [betas, maxLogLike, phat, iter] = vspglm(Y, X, links)
               sprintf('Cell Arrays are of Incompatible Sizes \n'));                    
     end
     
-    % Extract dimensions
-    [x_rows, dims] = cellfun(@size, X);
+    %----------------------------------------------------------------------
+   
+    [row, cols] = cellfun(@size, X);
+    % Check if the cons keyword has been correctly  used 
+    if exist('cons', 'var')       
+        
+        assert(strcmp(cons, "equal") || strcmp(cons, "symmetric"), ...
+            sprintf(...
+            ['Incorrect Specification for Cons: \n', ...
+            'Input must be "equal" or "symmetric":  %s \n'],...
+            cons));
+        
+        % Assert that the correct link functions/design matrices have
+        % been used
+        
+        switch cons
+            case "equal"
+                % All X matrices must be of the same size                
+                assert(all(row(1) == row) || all(cols(1) == cols), ...
+                    "Design matrices have incorrect dimensions for equal");
+                % Check that only one link function is used 
+               assert(length(links) == 1, ...
+                   "Only one link function should be used")
+               dims = cols(1);
+                
+            case "symmetric"                
+                % Check that there is an even number of  inputs
+                assert(mod(K, 2) == 0,["Uneven number of inputs", ...
+                    "for the symmetric constraint"]);
+                % Check that half the design matrices are of the correct
+                % size
+                K2 = K/2;
+                assert(all(row(1) == row(1:(K2))) || ...
+                    all(cols(1) == cols(1:(K2))) ||...
+                    all(row(K2 + 1) == row((K2 + 1):end)) || ...
+                    all(cols(K2 + 1) == cols((K2 + 1):end)),...
+                    ["Design matrices have incorrect dimensions for",...
+                    "Symmetric"]);
+                % Check that all two link functions are entered
+               assert(length(links) == 2,...
+                   "Only two link functions should be used")
+               dims = [cols(1), cols(end)];
+                
+        end     
+    else
+        dims = cols;
+        cons = "";
+    end
+        
+    
+    % Extract Y dimensions
     [y_rows, ~] = cellfun(@size, Y);
     
     % Check dimensions
-    assert(isequal(x_rows, y_rows), "Incorrect Data Dimensions")
+    assert(isequal(row, y_rows), "Incorrect Data Dimensions")
       
     
     % Observations
@@ -43,7 +100,7 @@ function [betas, maxLogLike, phat, iter] = vspglm(Y, X, links)
     
     
     % Get the initial beta values
-    beta0 = initialBetas(Y, links, dims);
+    beta0 = initialBetas(Y, links, dims, cons);
     
     % Set the initial values of the parameters    
     p0 = ones(N,1)/N;                 
@@ -51,13 +108,12 @@ function [betas, maxLogLike, phat, iter] = vspglm(Y, X, links)
     b0 = zeros(N,1);                  
     thetas = zeros(N * K,1);
     
-    % Initial Parameter vector
-      
-    param0 = [ reshape(cell2mat(beta0), [sum(dims), 1]);logp0;b0;thetas];
+    % Initial Parameter vector      
+    param0 = [reshape(cell2mat(beta0), [sum(dims), 1]);logp0;b0;thetas];
     
     % Functions to pass data to
     likelihood = @(params) logLikelihood(params,Y,dims);
-    constraint = @(params) constraints(params,X,Y,links);
+    constraint = @(params) constraints(params,X,Y,dims,links, cons);
     
         % Set options for FMINCON
     options = optimset('MaxFunEvals',1e5, 'MaxIter', 1e5, 'TolFun', 1e-8,...
@@ -66,15 +122,13 @@ function [betas, maxLogLike, phat, iter] = vspglm(Y, X, links)
              'SubproblemAlgorithm', 'cg') ;
 
      % Optimize
-     fprintf("Running VSPGLM: \n")
-     tic
-     
+    
     [param, fvalue, exitflag, output,...
         ~] = fmincon(likelihood, param0,...
                                 [], [], [], [], [], [],constraint, options) ;
 
     % Fitted model properties
-    [logp, b, thetas ,betas]= extractParam(param, N, dims);      
+    [logp, b, thetas ,betas]= extractParam(param, N,K, dims);      
     
     % Output the different tilts at each observations
     thetaY = cellfun(@(x,y) x.*y.', thetas, Y, 'UniformOutput', false);
@@ -82,41 +136,20 @@ function [betas, maxLogLike, phat, iter] = vspglm(Y, X, links)
     phat = exp(logp.' + b + thetaYSum);
     
     maxLogLike= -fvalue ;    
-    iter = output.iterations;   
+    iter = output.iterations;     
     
     
-    % Print the fitted model in a formatted way
-    time = toc;
-    fprintf("VSPGLM converged in %.3f seconds \n", time)
-    fprintf("Fitted Model Found: \n")
    
-    
-    for i = 1:K
-        switch links{i}
-            case 'id'
-                mu = sprintf("Y_%d", i);
-            case 'inv'
-                mu = sprintf("1/(Y_%d)", i);
-            case 'log'
-                mu = sprintf("log(Y_%d)", i);
-            case 'logit'
-                mu = sprintf("log((Y_%d)/(1 - Y_%d))", i, i);
-        end
-        bs = betas{i};       
-        linear = sprintf("%.3fx_0",bs(1));
-        for j = 1:(dims(i)-1)
-            linear = linear + sprintf("%s%fx_%d",sgn(bs(j  +1)),...
-            abs(bs(j + 1)) ,j);
-        end
-        fprintf("%s ~ %s\n", mu, linear)
-    end
-        
 
     
 end
 
 %% Helper Functions 
-function [betas] = initialBetas(Y, links, dims)   
+
+
+%--------------------------------------------------------------------------
+%  Calculates the initial beta values
+function [betas] = initialBetas(Y, links, dims, cons)   
     % [betas] = initialBetas(Y, links, dims) 
     % Calculates the initial guess for each beta
     % This coincides to beta_0i = link(mean(y_i)), beta_ji = 0 forall j
@@ -131,18 +164,32 @@ function [betas] = initialBetas(Y, links, dims)
     %                  i = 1, 2, .., K of each design matrix X_i
     % Returns:
     %         betas, 1 x K cell array of q_i x 1 arrays containing the
-    %                initial beta values
+    %                initial beta values    
+    
     
     
     % Cell array to store the initial values in 
-    vals = cell(1,length(dims));
+    vals = cell(1,length(links));
     
     % Cell array to store betas in 
-    betas = cell(length(dims), 1);
+    betas = cell(length(links), 1);
     
     % Loop through and calculate initial value
-    for i = 1:length(dims)
-        mu = mean(Y{i});
+    for i = 1:length(links)
+        switch cons           
+            case "equal"
+                mu = mean(cellfun(@mean, Y));
+            case "symmetric"
+                N = length(dims)/2;
+                if i == 1
+                    mu = mean(arrayfun(@(i) mean(Y{i}), 1:N));
+                else
+                    mu = mean(arrayfun(@(i) mean(Y{i}), (N  +1):length(Y)));
+                end
+            otherwise                  
+                mu = mean(Y{i});
+        end                
+       
         switch(links{i})
             case 'id'
                 vals{i} = mu;
@@ -152,13 +199,14 @@ function [betas] = initialBetas(Y, links, dims)
                 assert(mu > 0, "Log Link applied to negative mean")
                 vals{i} = log(mu);
             case 'logit'
-                assert(mu > 0 && mu < 1, "Logit  Link applied to incorrect mean")
+                assert(mu > 0 && mu < 1,...
+                    "Logit  Link applied to incorrect mean")
                 vals{i} = log(mu/(1-mu));
         end
         betas{i} = [vals{i}; zeros(dims(i) - 1, 1)];
     end        
 end
-
+%--------------------------------------------------------------------------
 function s = sgn(x)
     if x>=0
         s = "+";

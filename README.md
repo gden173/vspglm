@@ -145,7 +145,7 @@ data.death = data.death - 1;
 data.burn_severity  = log(data.burn_severity  + 1);
 
 % Subset of the data  (Can't be too large)
-N = 300;
+N = 500;
 X = {[ones(N, 1), data.age(1:N)], [ones(N, 1), data.age(1:N)]};
 Y = {data.death(1:N), data.burn_severity(1:N)};
 links = {'logit', 'id'};
@@ -156,9 +156,10 @@ The resulting models are
 
 ```matlab
 Running VSPGLM: 
+VSPGLM converged in 207.694 seconds 
 Fitted Model Found: 
-log((Y_1)/(1 - Y_1)) ~ 3.510173x_0-0.038698x_1
-Y_2 ~ 6.755042x_0-0.001861x_1
+log((Y_1)/(1 - Y_1)) ~ 3.513x_0-0.044530x_1
+Y_2 ~ 6.593x_0+0.002236x_1
 ```
 
 #### UN
@@ -220,10 +221,42 @@ links = {'log', 'log', 'log'};
 
 ```matlab
 Running VSPGLM: 
+VSPGLM converged in 82.901 seconds 
 Fitted Model Found: 
-log(Y_1) ~ -1.133181x_0+0.000127x_1
-log(Y_2) ~ -1.232098x_0+0.001867x_1
-log(Y_3) ~ -0.623759x_0+0.000536x_1
+log((Y_1)/(1 - Y_1)) ~ -0.755x_0+0.000253x_1
+log((Y_2)/(1 - Y_2)) ~ -1.048x_0+0.004084x_1
+log((Y_3)/(1 - Y_3)) ~ -0.069x_0+0.002654x_1
+```
+
+#### 8 Dimensional Test
+
+8 Dimensional test run. Every second model should be identical, as they each use the same data and link function.
+
+The data used here is just replications of the data found in the Burns example.
+
+```matlab
+N = 100;
+x = [ones(N, 1), data.age(1:N)];
+X = {x,x,x,x,x,x,x,x};
+y1 = data.death(1:N);
+y2 = data.burn_severity(1:N);
+Y = {y1,y2,y1,y2,y1,y2,y1,y2};
+links = {'logit', 'id','logit', 'id','logit', 'id','logit', 'id'};
+[betas, maxLogLike, phat, iter] = vspglm(Y, X, links);
+```
+
+```matlab
+Running VSPGLM: 
+VSPGLM converged in 16.716 seconds 
+Fitted Model Found: 
+log((Y_1)/(1 - Y_1)) ~ 3.031x_0-0.027330x_1
+Y_2 ~ 6.574x_0-0.000400x_1
+log((Y_3)/(1 - Y_3)) ~ 3.031x_0-0.027330x_1
+Y_4 ~ 6.574x_0-0.000400x_1
+log((Y_5)/(1 - Y_5)) ~ 3.031x_0-0.027330x_1
+Y_6 ~ 6.574x_0-0.000400x_1
+log((Y_7)/(1 - Y_7)) ~ 3.031x_0-0.027330x_1
+Y_8 ~ 6.574x_0-0.000400x_1
 ```
 
 

@@ -1,4 +1,4 @@
-function[meanConstraint, meanConstraintGrad]= meanConstraints(Y,X,param,links)
+function[meanConstraint, meanConstraintGrad]= meanConstraints(Y,X,param,dims, links, cons)
     %[meanConstraint, meanConstraintGrad]= meanConstraints(Y,X,param,links)
     % Computes the mean constraints for the given response variables
     %                 Y = {y1, ..., yd}
@@ -6,18 +6,16 @@ function[meanConstraint, meanConstraintGrad]= meanConstraints(Y,X,param,links)
     %                 X = {x1, ..., xd};    
     
     % Number of data points
-    [N, dims] = cellfun(@size, X);
-    N = N(1);
-    K = length(links);
-    
+    [N,~] = cellfun(@size, X);    
+    [N, K] = deal(N(1), length(X)); 
     % Extract the parameters 
-    [logp, b, thetas, betas]= extractParam(param, N, dims);
+    [logp, b, thetas, betas]= extractParam(param, N,K,  dims);
     
     % Beta derivatives
-    [betaGradient] = betaDerivatives(betas, X, links);
+    [betaGradient] = betaDerivatives(betas, X, links,dims, cons);
     
     % Current fitted mean values
-    mus = meanValues(X, betas, links);    
+    mus = meanValues(X, betas, links, cons);    
        
     % Compute p_i * exp(theta_j * Y_i + b_j)j = 1, ..., N
     % These are stored across the rows of pexp
@@ -71,7 +69,7 @@ end
 
 %% Helper Functions 
 
-function [betaGradient] = betaDerivatives(betas, X, links)
+function [betaGradient] = betaDerivatives(betas, X, links,dims,  cons)
     % [betaGradient] = betaDerivatives(betas, X, links)
     % Takes as arguments  a 1 X K cell array of the linear predictors 
     %                 betas = {beta_1,.., beta_k}
@@ -88,44 +86,85 @@ function [betaGradient] = betaDerivatives(betas, X, links)
     
     
     % Data points
-    N = size(X{1}, 1);
-    
-    % Number of links
-    K = length(X);    
+    N = size(X{1}, 1);   
+    K = length(X);
     
     % Loop through links
     vals = cell(1,K);
-    for j = 1:K           
-        switch links{j}
+    
+    for j = 1:K     
+        switch cons
+            case "equal"
+                link  = links{1};
+                b = betas{1};
+            case "symmetric"               
+                if j == 1                    
+                   link  = links{1};
+                   b = betas{1};
+                else
+                   link  = links{2};
+                   b = betas{end};
+                end
+            otherwise
+                link  = links{j};
+                b = betas{j};
+        end
+            
+        switch link
             case 'id'
                 vals{j} = X{j};
             case 'inv'
-                vals{j} = -(1./(X{j}*betas{j})).^2.* X{j};
+                vals{j} = -(1./(X{j}*b)).^2.* X{j};
             case 'log'      
-                mu = exp(X{j}* betas{j});
+                mu = exp(X{j}* b);
                 vals{j} = mu.* X{j};
             case 'logit' 
-                eXB = exp(X{j}*betas{j});
+                eXB = exp(X{j}*b);
                 mu = eXB./(1 + eXB);
                 vals{j} = (mu.*(1 - mu)).*X{j};
         end        
     end
     % Set row 
     betaGradient = blkdiag(vals{1:end});
+    switch cons
+        case "equal"
+            betaGradient = sum(reshape(betaGradient, [N*K,sum(dims),K]), 3);
+        case "symmetric"
+            betaGradient = reshape(betaGradient, [N*K,sum(dims),K/2]);
+            betaGradient = [sum(betaGradient(:, 1:(K/2),:), 3),...
+                sum(betaGradient(:, (K/2 + 1):end, :), 3)];
+    end
+
+    
 end
 
-function [mus] = meanValues(X, betas, links)
+function [mus] = meanValues(X, betas, links, cons)
 % [mus] = meanValues(X, betas, links) computes the current 
-% fitted mean values for using the given design matrices X = {x1, x2}
-% linear predictors betas = {beta1, beta2} 
+% fitted mean values for using the given design matrices X  = {x_1, ..,
+% x_k}, linear predictors betas = {beta_1, ..., beta_k}
 % and links = {'id', 'inv', 'log', 'logit}
 
 N = size(X{1}, 1);
-K = length(links);
+K = length(X);
 mus = cell(1, K);
 for i=1:K
-    XB = X{i}* betas{i};
-    switch links{i}
+    switch cons
+        case "equal"
+            link = links{1};
+            XB = X{i}* betas{1};
+        case "symmetric"
+            if i <= K/2
+                link = links{1};
+                XB = X{i}* betas{1};
+            else
+                link = links{end};
+                XB = X{i}* betas{end};
+            end
+        otherwise     
+            link = links{i};
+            XB = X{i}* betas{i};
+    end
+    switch link
         case 'id'
             mus{i} = XB;
         case 'inv'

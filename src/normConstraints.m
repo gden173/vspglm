@@ -1,4 +1,4 @@
-function [normConstraint, normConstraintGrad] = normConstraints(Y, param,dims)
+function [normConstraint, normConstraintGrad] = normConstraints(Y,X, param,dims)
     % [normConstraint, normConstraintGrad] = normConstraints(X, param)
     % takes as input Y = {y1, y2, .., yp} a cell array of response
     % variables and 
@@ -19,10 +19,9 @@ function [normConstraint, normConstraintGrad] = normConstraints(Y, param,dims)
     
     % Data
     N = length(Y{1});
-    K = length(dims);
-    
+    K = length(Y);
     % Extract the parameters
-    [logp, b, thetas,~]= extractParam(param, N, dims);
+    [logp, b, thetas,~] = extractParam(param, N,K, dims);
       
       
     % Compute p_i * exp(theta_j * Y_i + b_j)j = 1, ..., N
@@ -52,6 +51,7 @@ function [normConstraint, normConstraintGrad] = normConstraints(Y, param,dims)
     
     
     % beta partial derivatives 
+    %[~, vals] = cellfun(@size, X);
     partial_beta = zeros(N, sum(dims));
     
     % Assign to a matrix 
@@ -59,7 +59,7 @@ function [normConstraint, normConstraintGrad] = normConstraints(Y, param,dims)
                           partial_p,...
                           partial_b,...
                           cell2mat(partial_theta)];    
-    assert(isequaln(size(normConstraintGrad), [N, length(param)]), ...
-        'gradient is of improper size')
+%     assert(isequaln(size(normConstraintGrad), [N, length(param)]), ...
+%         'gradient is of improper size')
      
 end

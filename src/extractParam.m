@@ -1,4 +1,4 @@
-function [logp, b, thetas, betas] = extractParam(params, N, dims)
+function [logp, b, thetas, betas] = extractParam(params, N,K,  dims)
     % [logp, b, thetas, betas] = extractParam(params, N, dims)
     % Extracts the current parameter values for the log probabilities
     % (logp), normalising constants (b), tilts (theta) and linear
@@ -21,19 +21,19 @@ function [logp, b, thetas, betas] = extractParam(params, N, dims)
     
     
     %  Extract the parameters
-    K = length(dims);
-    [betas, logp, b, thetas] = deal(params(1:sum(dims)),...
-                                    params((sum(dims) + 1):(sum(dims)+ N)),...
-                                    params((sum(dims)+1+N):(sum(dims)+2*N)),...
-                                    params((sum(dims)+2*N + 1):end));
+    s = sum(dims);
+    [betas, logp, b, thetas] = deal(params(1:s),...
+                                    params((s + 1):(s+ N)),...
+                                    params((s+1+N):(s+2*N)),...
+                                    params((s+2*N + 1):end));
     
     % Reshape the data to be column vectors
     logp = reshape(logp, [N, 1]);
     b = reshape(b, [N,1]);
     
-    % Convert theatas and betas to cell arrays
+    % Convert thetas and betas to cell arrays
     thetas = num2cell(reshape(thetas, [N, K]), 1);
-    betas = mat2cell(reshape(betas,[sum(dims), 1] ), dims, 1);                            
+    betas = mat2cell(reshape(betas,[s, 1] ), dims, 1);                            
                                 
 end
 
