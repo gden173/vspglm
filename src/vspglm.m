@@ -116,10 +116,12 @@ function [betas, maxLogLike, phat, iter] = vspglm(Y, X, links, cons)
     constraint = @(params) constraints(params,X,Y,dims,links, cons);
     
         % Set options for FMINCON
-    options = optimset('MaxFunEvals',1e5, 'MaxIter', 1e5, 'TolFun', 1e-8,...
-             'TolCon', 1e-8, 'TolX', 1e-8, 'Algorithm', 'interior-point',...
+    % 'interior-point'
+    % 'active-set'
+    options = optimset('MaxFunEvals',1e5, 'MaxIter', 1e5, 'TolFun', 1e-10,...
+             'TolCon', 1e-6, 'TolX', 1e-10, 'Algorithm', 'interior-point',...
              'Display', 'off', 'GradConstr', 'on', 'GradObj', 'on', ...
-             'SubproblemAlgorithm', 'cg') ;
+             'SubproblemAlgorithm', 'cg', 'Display', 'iter') ;
 
      % Optimize
     
@@ -180,17 +182,17 @@ function [betas] = initialBetas(Y, links, dims, cons)
             case "equal"
                 mu = mean(cellfun(@mean, Y));
             case "symmetric"
-                N = length(dims)/2;
+                N = length(Y)/2;
                 if i == 1
                     mu = mean(arrayfun(@(i) mean(Y{i}), 1:N));
                 else
-                    mu = mean(arrayfun(@(i) mean(Y{i}), (N  +1):length(Y)));
+                    mu = mean(arrayfun(@(i) mean(Y{i}), (N+1):length(Y)));
                 end
             otherwise                  
                 mu = mean(Y{i});
         end                
        
-        switch(links{i})
+        switch links{i}
             case 'id'
                 vals{i} = mu;
             case 'inv'
@@ -207,10 +209,3 @@ function [betas] = initialBetas(Y, links, dims, cons)
     end        
 end
 %--------------------------------------------------------------------------
-function s = sgn(x)
-    if x>=0
-        s = "+";
-    else
-        s = "-";
-    end
-end

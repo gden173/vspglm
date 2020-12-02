@@ -45,38 +45,12 @@ function model = fit_vspglm(Y,X,links,cons)
     
      fprintf("VSPGLM converged in %.3f seconds \n", toc) 
      
-     % Compute the fitted values for each model
-     fitted = cell(1, K);
-     fitted0 = cell(1, K);
-     ssm = 0;
-     sse = 0;
-     for i = 1:K
-         % Get the fitted values
-         switch cons
-             case "equal"
-                 fitted{i} = X{i}*betas{1};
-                 fitted0{i} = x0{i}*betas0{1};
-             case "symmetric"
-                 if i <= K/2
-                     fitted{i} = X{i}*betas{1};
-                     fitted0{i} = x0{i}*betas0{1};
-                 else
-                     fitted{i} = X{i}*betas{2};
-                     fitted0{i} = x0{i}*betas0{2};
-                 end
-             otherwise
-                 fitted{i} = X{i}*betas{i};
-                 fitted0{i} = x0{i}*betas0{i};
-         end
-         % Calculate the ssm and sse
-         ssm = ssm + sum((fitted{i} - Y{i}).^2);
-         sse = sse + sum((fitted0{i} - Y{i}).^2);
-     end
+    
      N = length(Y{1});
-     dfm = N*K - sum(arrayfun(@(i) length(betas{i}), 1:length(betas)));
-     dfe = N*K- sum(arrayfun(@(i) length(betas0{i}), 1:length(betas0)));
-     fstat = (ssm/dfm)/(sse/dfe);
-     pval = fcdf(fstat, dfm, dfe, 'upper');
+     pm = sum(arrayfun(@(i) length(betas{i}), 1:length(betas)));
+     pc = sum(arrayfun(@(i) length(betas0{i}), 1:length(betas0)));
+     lstat = 2*(maxLogLike - maxLogLike0);
+     pval = fcdf(lstat, pm-pc, N-pm, 'upper');
     
     
     
@@ -84,7 +58,7 @@ function model = fit_vspglm(Y,X,links,cons)
     % Print Summary
     %----------------------------------------------------------------------
     
-    printVSPGLM(N,K,iter, links, betas, maxLogLike, cons, fstat, pval, tableNames,responseNames)
+    printVSPGLM(N,K,iter, links, betas, maxLogLike, cons, lstat, pval, tableNames,responseNames)
     
     %----------------------------------------------------------------------
     % Return model object
@@ -192,7 +166,7 @@ function printVSPGLM(N,K,iter, links, betas, maxLogLike, cons, fstat, pval, tabl
     fprintf("Degrees of Freedom: %d \n",...
         N*K - sum(arrayfun(@(i) length(betas{i}), 1:length(betas))));
     fprintf("Log-Likelihood: %f \n", maxLogLike);
-    fprintf("F-Statistic vs constant model: %f , P-value:%f", fstat, pval);
+    fprintf("GLRT-Statistic vs constant model: %f , P-value:%f", fstat, pval);
     
     
     
