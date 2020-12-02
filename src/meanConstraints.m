@@ -98,7 +98,7 @@ function [betaGradient] = betaDerivatives(betas, X, links,dims,  cons)
                 link  = links{1};
                 b = betas{1};
             case "symmetric"               
-                if j == 1                    
+                if j <= K/2                    
                    link  = links{1};
                    b = betas{1};
                 else
@@ -144,7 +144,6 @@ function [mus] = meanValues(X, betas, links, cons)
 % x_k}, linear predictors betas = {beta_1, ..., beta_k}
 % and links = {'id', 'inv', 'log', 'logit}
 
-N = size(X{1}, 1);
 K = length(X);
 mus = cell(1, K);
 for i=1:K
