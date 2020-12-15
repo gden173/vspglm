@@ -1,4 +1,4 @@
-function[meanConstraint, meanConstraintGrad]= meanConstraints(Y,X,param,dims, links, cons)
+function[meanConstraint, meanConstraintGrad]= meanConstraints(Y,X,param,dims, links)
     %[meanConstraint, meanConstraintGrad]= meanConstraints(Y,X,param,links)
     % Computes the mean constraints for the given response variables
     %                 Y = {y1, ..., yd}
@@ -12,10 +12,10 @@ function[meanConstraint, meanConstraintGrad]= meanConstraints(Y,X,param,dims, li
     [logp, b, thetas, betas]= extractParam(param, N,K,  dims);
     
     % Beta derivatives
-    [betaGradient] = betaDerivatives(betas, X, links,dims, cons);
+    [betaGradient] = betaDerivatives(betas, X, links,dims);
     
     % Current fitted mean values
-    mus = meanValues(X, betas, links, cons);    
+    mus = meanValues(X, betas, links);    
        
     % Compute p_i * exp(theta_j * Y_i + b_j)j = 1, ..., N
     % These are stored across the rows of pexp
@@ -69,7 +69,7 @@ end
 
 %% Helper Functions 
 
-function [betaGradient] = betaDerivatives(betas, X, links,dims,  cons)
+function [betaGradient] = betaDerivatives(betas, X, links,dims)
     % [betaGradient] = betaDerivatives(betas, X, links)
     % Takes as arguments  a 1 X K cell array of the linear predictors 
     %                 betas = {beta_1,.., beta_k}
@@ -90,55 +90,34 @@ function [betaGradient] = betaDerivatives(betas, X, links,dims,  cons)
     K = length(X);
     
     % Loop through links
-    vals = cell(1,K);
-    
-    for j = 1:K     
-        switch cons
-            case "equal"
-                link  = links{1};
-                b = betas{1};
-            case "symmetric"               
-                if j <= K/2                    
-                   link  = links{1};
-                   b = betas{1};
-                else
-                   link  = links{2};
-                   b = betas{end};
-                end
-            otherwise
-                link  = links{j};
-                b = betas{j};
-        end
-            
+    vals = cell(1,K);    
+    for j = 1:K
+        
+        link  = links{j};
+        b = betas{j};
+        
         switch link
             case 'id'
                 vals{j} = X{j};
             case 'inv'
                 vals{j} = -(1./(X{j}*b)).^2.* X{j};
-            case 'log'      
+            case 'log'
                 mu = exp(X{j}* b);
                 vals{j} = mu.* X{j};
-            case 'logit' 
+            case 'logit'
                 eXB = exp(X{j}*b);
                 mu = eXB./(1 + eXB);
                 vals{j} = (mu.*(1 - mu)).*X{j};
-        end        
+        end
     end
     % Set row 
     betaGradient = blkdiag(vals{1:end});
-    switch cons
-        case "equal"
-            betaGradient = sum(reshape(betaGradient, [N*K,sum(dims),K]), 3);
-        case "symmetric"
-            betaGradient = reshape(betaGradient, [N*K,sum(dims),K/2]);
-            betaGradient = [sum(betaGradient(:, 1:(K/2),:), 3),...
-                sum(betaGradient(:, (K/2 + 1):end, :), 3)];
-    end
+    
 
     
 end
 
-function [mus] = meanValues(X, betas, links, cons)
+function [mus] = meanValues(X, betas, links)
 % [mus] = meanValues(X, betas, links) computes the current 
 % fitted mean values for using the given design matrices X  = {x_1, ..,
 % x_k}, linear predictors betas = {beta_1, ..., beta_k}
@@ -146,23 +125,12 @@ function [mus] = meanValues(X, betas, links, cons)
 
 K = length(X);
 mus = cell(1, K);
+
 for i=1:K
-    switch cons
-        case "equal"
-            link = links{1};
-            XB = X{i}* betas{1};
-        case "symmetric"
-            if i <= K/2
-                link = links{1};
-                XB = X{i}* betas{1};
-            else
-                link = links{end};
-                XB = X{i}* betas{end};
-            end
-        otherwise     
-            link = links{i};
-            XB = X{i}* betas{i};
-    end
+    
+    link = links{i};
+    XB = X{i}* betas{i};
+    
     switch link
         case 'id'
             mus{i} = XB;
@@ -172,6 +140,6 @@ for i=1:K
             mus{i} = exp(XB);
         case 'logit'
             mus{i} = exp(XB)./(1 +  exp(XB));
-    end        
+    end
 end
 end
