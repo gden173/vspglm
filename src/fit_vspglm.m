@@ -1,176 +1,76 @@
-function model = fit_vspglm(Y,X,links,cons)
-    % TODO: Add documentation
+function vspglm_model = fit_vspglm(formula, tbl, links)
+    % vspglm_model = fit_vspglm(formula, tbl, links) 
+    % fits a vector generalized semi-parametric linear model and stores
+    % the model output in vspglm_model
+    % the function currently takes 3 arguments,
+    % formula, a string formula which has the format 
+    %       One Response: "y ~ (x1, x2, ..., xp)"
+    %       Multiple Responses: "(y1,y2) ~ (x1, x3) | y3 ~ x2"
+    % Where each variable y1, .., yk, x1, .., xp are columns in 
+    % the table argument tbl. 
+    % The last argument is then links, a 1 x k cell array of the link
+    % functions to be used for each model.
     
     
     %----------------------------------------------------------------------
-    % Fit models
-    %----------------------------------------------------------------------
-     fprintf("Running VSPGLM: \n")
-     tic
-     
-     % Unconstrained model
-     % Add intercept and create simple model
-     K = length(X);
-     
-     x0 = cell(1, K);   
-     tableNames = cell(1, K);
-     responseNames = cell(1, K);
-     for i  = 1:K 
-         if istable(X{i})
-             x = X{i};
-             tableNames{i} = char(x.Properties.VariableNames);
-             X{i} = table2array(X{i});             
-         end
-         if istable(Y{i})
-             y = Y{i};
-             responseNames{i} = char(y.Properties.VariableNames);
-             Y{i} = table2array(Y{i});
-         end
-         x0{i} = ones(size(X{i}, 1), 1);
-         X{i} = [ones(size(X{i}, 1), 1), X{i}];
-     end
-     if exist('cons', 'var')
-         [betas, maxLogLike, phat, iter] = vspglm(Y, X, links, cons);
-     
-         % Constant model
-         [betas0, maxLogLike0, phat0, iter0] = vspglm(Y, x0, links, cons);  
-     else
-           cons = " ";
-          [betas, maxLogLike, phat, iter] = vspglm(Y, X, links);
-     
-         % Constant model
-         [betas0, maxLogLike0, phat0, iter0] = vspglm(Y, x0, links);  
-     end        
-         
-    
-     fprintf("VSPGLM converged in %.3f seconds \n", toc) 
-     
-    
-     N = length(Y{1});
-     pm = sum(arrayfun(@(i) length(betas{i}), 1:length(betas)));
-     pc = sum(arrayfun(@(i) length(betas0{i}), 1:length(betas0)));
-     lstat = 2*(maxLogLike - maxLogLike0);
-     pval = fcdf(lstat, pm-pc, N-pm, 'upper');
-    
-    
-    
-    %----------------------------------------------------------------------
-    % Print Summary
+    % Function Arguments 
+    arguments
+        formula string
+        tbl table
+        links (1,:) cell                
+    end
     %----------------------------------------------------------------------
     
-    printVSPGLM(N,K,iter, links, betas, maxLogLike, cons, lstat, pval, tableNames,responseNames)
+    % Parse the formulas
+    formulas = getFormulas(VSPGLMFormula(formula));
     
-    %----------------------------------------------------------------------
-    % Return model object
-    %----------------------------------------------------------------------
+    % Create the design matrices
+    intercept = ones(height(tbl), 1);
+    int = table(intercept);
+    X = cell(1, length(formulas));
+    Y = cell(1, length(formulas));
+    
+    for i = 1:length(formulas)
+        X{i} = table2array([int tbl(:,formulas(i).variables)]);
+        Y{i} = table2array(tbl(:,formulas(i).response));
+    end
+    
+    % Run vspglm initially
+    [maxloglike, params] = vspglm(Y, X, links);
+    
+    % Extract the parameters
+    [~, dims] = cellfun(@size, X);
+    [~, ~, ~, betas] = extractParam(params, length(Y{1}),length(X), dims);
+    
+    % Create the model
+    vspglm_model = struct([]);
+    vspglm_model(1).loglike = maxloglike;
     for i = 1:length(betas)
-        model(i).model = i;
-        model(i).covariateNames = tableNames{i};
-        model(i).betas = betas{i};
-        model(i).link = links{i};   
-       
-    end
-    
-    
-end
-
-%--------------------------------------------------------------------------
-function printVSPGLM(N,K,iter, links, betas, maxLogLike, cons, fstat, pval, tableNames, responseNames)
-    fprintf("\n\n\n Semi-Parametric Vector Generalized Linear Regression Model: \n \n");
-    fprintf("         fmincon converged in %d iterations. \n", iter);
-    switch cons
-        case "equal"
-            fprintf("         Linear Predictors are constrained to be equal. \n \n");
-        case "symmetric" 
-            fprintf("         Linear Predictors are constrained to be symmetric.\n \n");
-        otherwise
-            fprintf("         Linear Predictors are unconstrained. \n \n");
-    end
-    
-    for i  = 1:length(links)
-        names = tableNames{i};
-        switch cons
-            case "symmetric"
-                if i == 1
-                    ynames = responseNames{i};
-                else
-                    ynames = responseNames{end};
-                end
-            otherwise
-                ynames = responseNames{i};
-        end
-        if isempty(ynames)
-            ynames = "y";
-        end
-        fprintf("         Model %d: \n", i)
-        switch links{i}
-            case "id"
-                l = sprintf("%s ~ ", ynames);
-            case "inv"
-                l = sprintf("1/%s ~ ", ynames);
-            case "log"
-                l = sprintf("log(%s) ~ ", ynames);
-            case "logit"
-                l = sprintf("log(%s) - log(1-%s) ~ ", ynames,ynames);
-        end
-        for j = 1:length(betas{i})            
-            
-            if j > 1
-                if ~isempty(names)
-                    l = l + sprintf("+ %s", names(j-1, :));
-                else
-                    l = l + sprintf("+ x%d ", j-1);
-                end
+        estimates = betas{i};     
+        glrts = zeros(length(estimates), 1);
+        pval = glrts;
+        for j = 2:length(estimates)
+            x = X; d = X{i};
+            x{i} = d(:, [(1:(j-1)) (j  +1):end]);      
+            if j == 1
+                [maxloglikeT, paramsT] = vspglm(Y, x, links, 'param', []); 
             else
-                l = l + sprintf("%d ", j);
-            end          
-                
+                [maxloglikeT, paramsT] = vspglm(Y, x, links); 
+            end              
+            glrts(j) = 2*(maxloglike - maxloglikeT);
+            pval(j) = chi2cdf(glrts(j), 1, 'upper');
+            
         end
-        fprintf("               %s \n ", l);
-        fprintf("              Link = %s \n ", links{i});
-    end
-    fprintf("\n");   
-    
-    
-    fprintf("Estimated Coefficients: \n")
-    for i  = 1:length(links)
-        switch cons
-            case "symmetric"
-                if i == 1
-                    ynames = responseNames{i};
-                else
-                    ynames = responseNames{end};
-                end
-            otherwise
-                ynames = responseNames{i};
-        end
-        if isempty(ynames)
-            ynames = "y";
-        end
-        fprintf("         Model %d:  Response: %s \n", i, ynames)
-        % Create a table
-        Estimates = betas{i};
+        %vspglm_model(i).formula = [formulas(i).response, "~ (",formulas(i).variables{:}, ")"];
+        vspglm_model(i).link = links{i};
+        vspglm_model(i).coefficients = table(estimates, glrts, pval,...
+            'RowNames',cellstr(["intercept", formulas(i).variables]));
         
-        names = tableNames{i};
-        if ~isempty(names)
-            rowNames = ["(intercept)"; names];
-        else
-            rowNames = ["(intercept)"; arrayfun(@(i) sprintf("x%d", i),...
-                (1:(length(Estimates)-1)).')];
-        end
-        etable = table(Estimates, 'RowNames', rowNames);
-        disp(etable)
-        fprintf("\n");  
     end
-    fprintf("Number of Observations: %d \n", N*K)
-    fprintf("Degrees of Freedom: %d \n",...
-        N*K - sum(arrayfun(@(i) length(betas{i}), 1:length(betas))));
-    fprintf("Log-Likelihood: %f \n", maxLogLike);
-    fprintf("GLRT-Statistic vs constant model: %f , P-value:%f", fstat, pval);
     
     
-    
-    fprintf("\n\n");
-    
-    
+   
 end
+    
+    
+    
