@@ -5,11 +5,12 @@ addpath(genpath('C:\Users\gabri\Dropbox\sem2_2020\honours\code\vspglm\src'))
 
 %% Import data
 un = readtable('UN2.txt');
-
+un.logPPgdp = rescale(un.logPPgdp, -1, 1);
+un.logPPgdp = rescale(un.logFertility, -1, 1);
+%%
 % Create Design matrices
-N = size(un, 1);
-X = {[ones(N, 1), un.Purban],[ones(N, 1), un.Purban]};
-Y = {un.logPPgdp, un.logFertility};
+
 links = {'id', 'id'};
-[betas, maxLogLike, phat, iter] = vspglm(Y, X, links);
+un_model = fit_vspglm("(logPPgdp, logFertility) ~ Purban", un, links);
+un_model.coefficients
 

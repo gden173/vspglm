@@ -9,11 +9,12 @@ yR = [2,1,2,1,2.5,2.5,1.5,2.5,1,3,2.5,3,3,1.5,3,3,3,2,2,2.5,2,2.5,3,2,0.5,...
     0,2.5,1,1.5,0,1.5,2,2.5,2.5,3,3,2.5,3,2.5,1,2]';
 xL = [ones(20,1); zeros(21,1)] ;
 xR = [ones(6,1); zeros(14,1); ones(14,1); zeros(7,1)] ;
-intercept = ones(41,1) ;
-xxL1 = [intercept, xL] ;
-xxR1 = [intercept, xR] ;
-X = {xxL1, xxR1};
-Y = {yL, yR};
+
+X = table(xL, xR);
+Y = table(yL, yR);
+tbl = [X, Y];
 links = {'id', 'id'};
-[betas, maxLogLike, phat, iter] = vspglm(Y, X, links);
+rossner_model = fit_vspglm("yL ~ xL | yR ~ xR", tbl, links);
+
+rossner_model.coefficients
 

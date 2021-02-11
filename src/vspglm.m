@@ -1,4 +1,4 @@
-function [ maxLogLike, param] = vspglm(Y, X, links,args)
+function [ maxLogLike, param, converged] = vspglm(Y, X, links,args)
     %[betas, maxLogLike, phat] = vspglm(Y, X, links)
     % Use the method proposed by Huang (2014) in 
     % Joint Estimation of the Mean and Error Distribution in 
@@ -94,7 +94,7 @@ function [ maxLogLike, param] = vspglm(Y, X, links,args)
 
     
     
-    [param, fvalue, exitflag, output,...
+    [param, fvalue, converged, output,...
         ~] = fmincon(likelihood, param0,...
                                 [], [],[], [], [], [],constraint, options);
 

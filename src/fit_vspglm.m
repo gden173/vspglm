@@ -36,38 +36,55 @@ function vspglm_model = fit_vspglm(formula, tbl, links)
     end
     
     % Run vspglm initially
-    [maxloglike, params] = vspglm(Y, X, links);
-    
-    % Extract the parameters
-    [~, dims] = cellfun(@size, X);
-    [~, ~, ~, betas] = extractParam(params, length(Y{1}),length(X), dims);
-    
-    % Create the model
+    [maxloglike, params, converged] = vspglm(Y, X, links);
     vspglm_model = struct([]);
-    vspglm_model(1).loglike = maxloglike;
-    for i = 1:length(betas)
-        estimates = betas{i};     
-        glrts = zeros(length(estimates), 1);
-        pval = glrts;
-        for j = 2:length(estimates)
-            x = X; d = X{i};
-            x{i} = d(:, [(1:(j-1)) (j  +1):end]);      
-            if j == 1
-                [maxloglikeT, paramsT] = vspglm(Y, x, links, 'param', []); 
+    if converged == 1
+        vspglm_model(1).converged = 1;
+        % Extract the parameters
+        [~, dims] = cellfun(@size, X);
+        [~, ~, ~, betas] = extractParam(params, length(Y{1}),length(X), dims);
+        
+        % Create the model        
+        vspglm_model(1).loglike = maxloglike;
+        [se, r, co] = vcov(X, Y, params, links);
+        
+        for i = 1:length(betas)
+            estimates = betas{i};
+            if i == 1
+                StdError = se(1:dims(1));
             else
-                [maxloglikeT, paramsT] = vspglm(Y, x, links); 
-            end              
-            glrts(j) = 2*(maxloglike - maxloglikeT);
-            pval(j) = chi2cdf(glrts(j), 1, 'upper');
+                cdims = cumsum(dims);
+                StdError = se((cdims(i-1) + 1):cdims(i));
+            end
+            tValue = abs(estimates./StdError);
+            pValue = 2*(1 - tcdf(tValue ,length(Y{1})*length(betas) - r));
+            signif = cell(length(pValue),1);
+            for j = 1:length(signif)
+                if pValue(j) > 0.1
+                    signif{j} = '  ';
+                elseif pValue(j) > 0.05 && pValue(j) <= 0.1
+                    signif{j} = '.';
+                elseif pValue(j) > 0.01 && pValue(j) <= 0.05
+                    signif{j} = '*';
+                elseif pValue(j) > 0.001 && pValue(j) <= 0.01
+                    signif{j} = '**';
+                else
+                    signif{j} = '***';
+                end
+                
+            end
+            signif = cellstr(signif);
+            
+            
+            vspglm_model(i).link = links{i};
+            vspglm_model(i).coefficients = table(estimates, StdError,tValue, pValue ,signif, ...
+                'RowNames',cellstr(["intercept", formulas(i).variables]));
             
         end
-        %vspglm_model(i).formula = [formulas(i).response, "~ (",formulas(i).variables{:}, ")"];
-        vspglm_model(i).link = links{i};
-        vspglm_model(i).coefficients = table(estimates, glrts, pval,...
-            'RowNames',cellstr(["intercept", formulas(i).variables]));
-        
+        vspglm_model(1).varbeta = co;
+    else
+        vspglm_model(1).converged = 0;
     end
-    
     
    
 end

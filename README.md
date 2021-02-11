@@ -222,21 +222,55 @@ data.death = data.death - 1;
 data.burn_severity  = log(data.burn_severity  + 1);
 
 % Subset of the data  (Can't be too large)
-N = 500;
-X = {[ones(N, 1), data.age(1:N)], [ones(N, 1), data.age(1:N)]};
-Y = {data.death(1:N), data.burn_severity(1:N)};
+X = {data(:,1), data(:,1)};
+Y = {data(:,4), data(:,3)};
 links = {'logit', 'id'};
-[betas, maxLogLike, phat, iter] = vspglm(Y, X, links);
+burns_model= fit_vspglm(Y,X,links);
+
+
 ```
 
 The resulting models are
 
 ```matlab
 Running VSPGLM: 
-VSPGLM converged in 207.694 seconds 
-Fitted Model Found: 
-log((Y_1)/(1 - Y_1)) ~ 3.513x_0-0.044530x_1
-Y_2 ~ 6.593x_0+0.002236x_1
+VSPGLM converged in 239.035 seconds 
+
+
+
+ Semi-Parametric Vector Generalized Linear Regression Model: 
+ 
+         fmincon converged in 21 iterations. 
+         Linear Predictors are unconstrained. 
+ 
+         Model 1: 
+               log(death) - log(1-death) ~ 1 + age 
+               Link = logit 
+          Model 2: 
+               burn_severity ~ 1 + age 
+               Link = id 
+ 
+Estimated Coefficients: 
+         Model 1:  Response: death 
+                   Estimates
+                   _________
+
+    (intercept)       3.657 
+    age            -0.05009 
+
+
+         Model 2:  Response: burn_severity 
+                   Estimates
+                   _________
+
+    (intercept)      6.7318 
+    age            0.002664 
+
+
+Number of Observations: 1962 
+Degrees of Freedom: 1958 
+Log-Likelihood: -6668.436075 
+F-Statistic vs constant model: 1.742574 , P-value:0.000000
 ```
 
 #### UN
