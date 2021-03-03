@@ -211,6 +211,9 @@ Log-Likelihood: -11.128060
 #### Burns
 
 ```matlab
+% Song (2007) Burns Injury data set example
+
+%% Import Data 
 % Song Burns Data set
 data = readtable('burns.txt');
 
@@ -218,14 +221,17 @@ data = readtable('burns.txt');
 data.Properties.VariableNames = {'age', 'gender',...
                                 'burn_severity', 'death'};
 % Transform the variables 
-data.death = data.death - 1;
-data.burn_severity  = log(data.burn_severity  + 1);
+data.death = abs(data.death - 2);
 
-% Subset of the data  (Can't be too large)
-X = {data(:,1), data(:,1)};
-Y = {data(:,4), data(:,3)};
+data.burn_severity  = log(data.burn_severity + 1);
+
+%%  Run the model
 links = {'logit', 'id'};
-burns_model= fit_vspglm(Y,X,links);
+burns_model= fit_vspglm("(death, burn_severity) ~ age",data,links);
+
+%% Print the results
+burns_model.coefficients
+burns_model.varbeta
 
 
 ```
