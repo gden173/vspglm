@@ -45,8 +45,9 @@ function vspglm_model = fit_vspglm(formula, tbl, links)
         [~, ~, ~, betas] = extractParam(params, length(Y{1}),length(X), dims);
         
         % Create the model        
+        
         vspglm_model(1).loglike = maxloglike;
-        [se, r, co] = vcov(X, Y, params, links);
+        [se, co] = vcov(X, Y, params, links);
         
         for i = 1:length(betas)
             estimates = betas{i};
@@ -57,7 +58,7 @@ function vspglm_model = fit_vspglm(formula, tbl, links)
                 StdError = se((cdims(i-1) + 1):cdims(i));
             end
             tValue = abs(estimates./StdError);
-            pValue = 2*(1 - tcdf(tValue ,length(Y{1})*length(betas) - r));
+            pValue = 2*(1 - tcdf(tValue ,length(Y{1})*length(betas) - rank(cell2mat(X))));
             signif = cell(length(pValue),1);
             for j = 1:length(signif)
                 if pValue(j) > 0.1
