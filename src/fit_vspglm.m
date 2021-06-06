@@ -1,11 +1,28 @@
-function vspglm_model = fit_vspglm(formula, tbl, links)
-    % vspglm_model = fit_vspglm(formula, tbl, links) 
+function vspglmmodel = fit_vspglm(formula, tbl, links)
+    % vspglm_mmodel = FIT_VSPGLM(formula, tbl,  links)
     % fits a vector generalized semi-parametric linear model and stores
-    % the model output in vspglm_model
+    % the model output in vspglmmodel
     % the function currently takes 3 arguments,
-    % formula, a string formula which has the format 
-    %       One Response: "y ~ (x1, x2, ..., xp)"
-    %       Multiple Responses: "(y1,y2) ~ (x1, x3) | y3 ~ x2"
+    % formula, a string array of string formulas 
+    % In the formula argument:
+    %            (y1, y2) ~ (x1, x3) -> y1 and y2 share all regression
+    %            coefficients
+    %            (y1, y2) ~ (x1, x3|x4) -> y1 and y2 share all 
+    %            regression coefficients except for the coefficeint to x3 
+    %            (y1) and x4 (y2)
+    % Responses can also  have a different number of covariates and still 
+    % share regression coefficients. To add another covariate use the
+    % notation (x2&x2|x3) and (0|0|x5), i.e
+    %          (y1, y2, y3) ~ (x1,(x2&x2|x3), (0|0|x4))
+    % This means that 
+    %                y1 ~ 1  + x1  + x2
+    %                y2 ~ 1  + x1  + x2
+    %                y3 ~ 1  + x1  + x3  + x4
+    % Where the regression coefficients beta_0 and beta_1  
+    % shared amongst all three models, with beta_2 shared amongs y1 and y2
+    % and beta_3 and beta_4 unique to y3. For shared regression
+    % coefficients across different covariates use x1==x3
+    %
     % Where each variable y1, .., yk, x1, .., xp are columns in 
     % the table argument tbl. 
     % The last argument is then links, a 1 x k cell array of the link
@@ -24,42 +41,60 @@ function vspglm_model = fit_vspglm(formula, tbl, links)
     % Parse the formulas
     formulas = getFormulas(VSPGLMFormula(formula));
     
-    % Create the design matrices
-    intercept = ones(height(tbl), 1);
-    int = table(intercept);
-    X = cell(1, length(formulas));
-    Y = cell(1, length(formulas));
+    %----------------------------------------------------------------------
     
+    
+    % Create the design matrices
+    Intercept = ones(height(tbl), 1);
+    tbl = [table(Intercept), tbl];
+    X = cell(1, length(links));
+    Y = cell(1, length(links));
+    Aeq = {};
+    
+    % Convert each design matrix to cell arrays
+    iter = 1;
     for i = 1:length(formulas)
-        X{i} = table2array([int tbl(:,formulas(i).variables)]);
-        Y{i} = table2array(tbl(:,formulas(i).response));
+        for j = 1:length(formulas(i).response)            
+            X{iter} = table2array(tbl(:,formulas(i).covariates{j}));
+            Y{iter} = table2array(tbl(:,formulas(i).response(j)));  
+            iter = iter + 1;
+        end
+        Aeq{i} = formulas(i).constraint;
     end
     
     % Run vspglm initially
-    [maxloglike, params, converged] = vspglm(Y, X, links);
-    vspglm_model = struct([]);
-    if converged == 1
-        vspglm_model(1).converged = 1;
+    [maxloglike, params, converged] = vspglm(Y, X, links, Aeq);
+    vspglmmodel = struct([]);   
+    
+    if converged ~= 100
+        vspglmmodel(1).converged = 1;
+        
+        
         % Extract the parameters
         [~, dims] = cellfun(@size, X);
-        [~, ~, ~, betas] = extractParam(params, length(Y{1}),length(X), dims);
+        [logp, b, thetas, betas] = extractParam(params, length(Y{1}),length(X), dims);
         
-        % Create the model        
+        % Create the model                
+        vspglmmodel(1).loglike = maxloglike;
+        [se, co, means, thetas, pexp, Yvar] = vcov(X, Y, params, links, tbl, formulas);
         
-        vspglm_model(1).loglike = maxloglike;
-        [se, co] = vcov(X, Y, params, links);
-        
-        for i = 1:length(betas)
-            estimates = betas{i};
-            if i == 1
-                StdError = se(1:dims(1));
-            else
-                cdims = cumsum(dims);
-                StdError = se((cdims(i-1) + 1):cdims(i));
+        count = 0;
+        iter = 1;
+        for i = 1:length(formulas)
+            Betas = {};
+            for j = (iter):( iter - 1 + length(formulas(i).betaConstraints(:, 1)))
+                Betas{end + 1} = betas{j};
             end
-            tValue = abs(estimates./StdError);
-            pValue = 2*(1 - tcdf(tValue ,length(Y{1})*length(betas) - rank(cell2mat(X))));
+            
+            lengths = cellfun(@length, Betas);
+            estimates = Betas{lengths == max(lengths)};            
+            StdError = se((count+1):(count + max(lengths)));
+            
+            
+            tValue = estimates./StdError;
+            pValue = 2*(1 - tcdf(abs(tValue) ,length(Y{1}) - rank(X{iter})));
             signif = cell(length(pValue),1);
+            
             for j = 1:length(signif)
                 if pValue(j) > 0.1
                     signif{j} = '  ';
@@ -74,18 +109,29 @@ function vspglm_model = fit_vspglm(formula, tbl, links)
                 end
                 
             end
-            signif = cellstr(signif);
+            signif = cellstr(signif);           
             
-            
-            vspglm_model(i).link = links{i};
-            vspglm_model(i).coefficients = table(estimates, StdError,tValue, pValue ,signif, ...
-                'RowNames',cellstr(["intercept", formulas(i).variables]));
-            
+            vspglmmodel(i).responses = formulas(i).response;
+            %vspglmmodel(i).link = links{i};
+            vspglmmodel(i).coefficients = table(estimates, StdError,tValue, pValue ,signif, ...
+                'RowNames',formulas(i).covariates{1});
+            count = count + length(estimates);
+            iter = iter+ 1;
         end
-        vspglm_model(1).varbeta = co;
+        
+        vspglmmodel(1).varbeta = co;
     else
-        vspglm_model(1).converged = 0;
+        vspglmmodel(1).converged = 0;
     end
+    vspglmmodel(1).X = X;
+    vspglmmodel(1).Y = Y;
+    vspglmmodel(1).params = params;
+    vspglmmodel(1).means = means;
+    vspglmmodel(1).thetas = thetas;
+    vspglmmodel(1).pTilt = exp(logp);
+    vspglmmodel(1).pTiltMatrix = pexp;
+    vspglmmodel(1).yCovariance = Yvar;
+   
     
    
 end

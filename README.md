@@ -25,7 +25,9 @@ $$
 
 ### Usage 
 
-Current usage examples
+Current usage examples. 
+
+(Some usage examples are incorrect as the contain the old syntax for running the models. These examples are currently in the process of being updated.)
 
 ### Univariate Response
 

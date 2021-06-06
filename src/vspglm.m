@@ -1,4 +1,4 @@
-function [ maxLogLike, param, converged] = vspglm(Y, X, links,args)
+function [ maxLogLike, param, converged] = vspglm(Y, X, links,Aeq)
     %[betas, maxLogLike, phat] = vspglm(Y, X, links)
     % Use the method proposed by Huang (2014) in 
     % Joint Estimation of the Mean and Error Distribution in 
@@ -32,9 +32,13 @@ function [ maxLogLike, param, converged] = vspglm(Y, X, links,args)
     arguments
         Y (1,:) cell
         X (1,:) cell
-        links (1,:) cell        
-        args.param (:, 1) double = nan  
+        links (1,:) cell       
+        Aeq cell  
     end
+    
+    % Determine if this is a symmetric model or not 
+    isSymmetric = length(Aeq) == 1;
+    
     
     
     % Check the input data 
@@ -49,7 +53,8 @@ function [ maxLogLike, param, converged] = vspglm(Y, X, links,args)
    
     [row, cols] = cellfun(@size, X);
     dims = cols;
-
+    
+    
         
     
     % Extract Y dimensions
@@ -62,45 +67,63 @@ function [ maxLogLike, param, converged] = vspglm(Y, X, links,args)
     % Observations
     N = y_rows(1);  
     
-    if isnan(args.param)
-        % Get the initial beta values
-        beta0 = initialBetas(Y, links, dims);
-    else
-        beta0 = initialBetas(Y, links, dims, 'int', X);
-    end    
+    % Initial beta values
+    beta0 = initialBetas(Y, links, dims);
+    
+    
     % Set the initial values of the parameters
     p0 = ones(N,1)/N;
     logp0 = log(p0);
     b0 = zeros(N,1);
-    thetas = zeros(N * K,1);
-    
-    % Initial Parameter vector
+    thetas = zeros(N * K,1);   
+   
+        
+   
     param0 = [reshape(cell2mat(beta0), [sum(dims), 1]);logp0;b0;thetas];
     
-    
+    %----------------------------------------------------------------------
+    % Normalise the response vector
+    minMax = cell(1, K);
+    y = cell(1, K);    
+    for i = 1:K
+        m = min(Y{i});
+        M = max(Y{i});
+        y{i} = (Y{i} - (m + M)/2)*(2/(M-m));
+        minMax{i} = [m, M];
+    end
+    %----------------------------------------------------------------------
     
     % Functions to pass data to
-    likelihood = @(params) logLikelihood(params,Y,dims);
-    constraint = @(params) constraints(params,X,Y,dims,links);
+    likelihood = @(params) logLikelihood(params,y,dims);
+    constraint = @(params) constraints(params,X,y,dims,links, minMax);
     
     % Set options for FMINCON
     % 'interior-point'
     % 'active-set'
     options = optimset('MaxFunEvals',1e5, 'MaxIter', 1e5, 'TolFun', 1e-8,...
              'TolCon', 1e-6, 'TolX', 1e-10,...
-             'Algorithm', 'interior-point',...
+             'Algorithm', 'sqp',...
              'Display', 'off', 'GradConstr', 'on', 'GradObj', 'on', ...
              'SubproblemAlgorithm', 'cg') ;
 
     
     
+    upperBound = [Inf*ones(1, length(param0) - (N*K)),(500/K) * ones(1, N*K)];
+    lowerBound = - upperBound;
+    tic
+    
     [param, fvalue, converged, output,...
         ~] = fmincon(likelihood, param0,...
-                                [], [],[], [], [], [],constraint, options);
+                                [], [],blkdiag(blkdiag(Aeq{:}), zeros(length(param0) - sum(dims))),...
+                                zeros(length(param0), 1),...
+                                [],....
+                                [] ,constraint, options);
 
+    toc
+    maxLogLike=-fvalue ;   
+    fprintf("Convergence Flag:%d \n ", converged)
+    assert(converged ~= -1 && converged ~= -2, 'No Optimal Point Was Found');
     
-    maxLogLike=-fvalue ;    
-      
     
     
    
@@ -113,7 +136,7 @@ end
 
 %--------------------------------------------------------------------------
 %  Calculates the initial beta values
-function [betas] = initialBetas(Y, links, dims, args)   
+function [betas] = initialBetas(Y, links, dims)   
     % [betas] = initialBetas(Y, links, dims) 
     % Calculates the initial guess for each beta
     % This coincides to beta_0i = link(mean(y_i)), beta_ji = 0 forall j
@@ -132,8 +155,7 @@ function [betas] = initialBetas(Y, links, dims, args)
     arguments
         Y (1, :) cell
         links (1, :) cell
-        dims 
-        args.int = {};
+        dims         
     end
     
     
@@ -160,11 +182,9 @@ function [betas] = initialBetas(Y, links, dims, args)
                     "Logit  Link applied to incorrect mean")
                 vals{i} = log(mu/(1-mu));
         end
-        if isempty(args.int)
-            betas{i} = [vals{i}; zeros(dims(i) - 1, 1)];
-        else
-            betas{i} = args.int{i}\(vals{i} * ones(size(args.int{i}, 1), 1));
-        end
+               
+        betas{i} = [vals{i}; zeros(dims(i) - 1, 1)];
+        
     end
 end
 %--------------------------------------------------------------------------

@@ -7,8 +7,9 @@ hunu = readtable('hunua.txt');
 
 %%
 links = {'logit','logit','logit'};
-hunu_model = fit_vspglm("(cyadea,beitaw,kniexc) ~ altitude", hunu, links);
+hunu_model = fit_vspglm(["cyadea~ altitude", "beitaw ~ altitude",...
+    "kniexc ~ altitude"], hunu, links);
 hunu_model.coefficients
-hunu_model.covariance
+hunu_model.varbeta
 
 

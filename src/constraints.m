@@ -1,4 +1,4 @@
-function [c, ceq, gradc, gradceq] = constraints(param,X,Y,dims, links)
+function [c, ceq, gradc, gradceq] = constraints(param,X,Y,dims, links, minMax)
 %[c, ceq, gradc, gradceq] = constraints(param,X,Y,links) 
 % computes and returns the equality and inequality constraints
 % for fmincons optimization. The gradients of each constraint 
@@ -11,7 +11,7 @@ function [c, ceq, gradc, gradceq] = constraints(param,X,Y,dims, links)
 [normConstraint, normConstraintGrad] = normConstraints(Y,X, param,dims);
 
 % Mean Constraints
-[meanConstraint, meanConstraintGrad]= meanConstraints(Y,X,param,dims,links);
+[meanConstraint, meanConstraintGrad]= meanConstraints(Y,X,param,dims,links, minMax);
 
 % Augment both vectors and return them 
 c = [];

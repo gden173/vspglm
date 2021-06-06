@@ -14,4 +14,4 @@ y = [2,1,0,4,1,2,0,0,4,4,1,4,1,5,2,5,5,5,0,5,1,1,3,3,2,2,0,1,5,2,3,3,3,...
 X = table(x1, x2, x4, y);
 links = {'log'};
 min_model = fit_vspglm("y ~ (x1, x2, x4)", X, links);
-min_model
+min_model.coefficients

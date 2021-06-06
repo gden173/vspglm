@@ -1,4 +1,4 @@
-function[meanConstraint, meanConstraintGrad]= meanConstraints(Y,X,param,dims, links)
+function[meanConstraint, meanConstraintGrad]= meanConstraints(Y,X,param,dims, links, minMax)
     %[meanConstraint, meanConstraintGrad]= meanConstraints(Y,X,param,links)
     % Computes the mean constraints for the given response variables
     %                 Y = {y1, ..., yd}
@@ -12,10 +12,10 @@ function[meanConstraint, meanConstraintGrad]= meanConstraints(Y,X,param,dims, li
     [logp, b, thetas, betas]= extractParam(param, N,K,  dims);
     
     % Beta derivatives
-    [betaGradient] = betaDerivatives(betas, X, links,dims);
+    [betaGradient] = betaDerivatives(betas, X, links,dims, minMax);
     
     % Current fitted mean values
-    mus = meanValues(X, betas, links);    
+    mus = meanValues(X, betas, links,minMax);    
        
     % Compute p_i * exp(theta_j * Y_i + b_j)j = 1, ..., N
     % These are stored across the rows of pexp
@@ -69,7 +69,7 @@ end
 
 %% Helper Functions 
 
-function [betaGradient] = betaDerivatives(betas, X, links,dims)
+function [betaGradient] = betaDerivatives(betas, X, links,dims, minMax)
     % [betaGradient] = betaDerivatives(betas, X, links)
     % Takes as arguments  a 1 X K cell array of the linear predictors 
     %                 betas = {beta_1,.., beta_k}
@@ -91,10 +91,11 @@ function [betaGradient] = betaDerivatives(betas, X, links,dims)
     
     % Loop through links
     vals = cell(1,K);    
-    for j = 1:K
-        
+    for j = 1:K        
         link  = links{j};
         b = betas{j};
+        minmax = minMax{j};
+       [m, M] = deal(minmax(1),minmax(2));
         
         switch link
             case 'id'
@@ -109,6 +110,7 @@ function [betaGradient] = betaDerivatives(betas, X, links,dims)
                 mu = eXB./(1 + eXB);
                 vals{j} = (mu.*(1 - mu)).*X{j};
         end
+        vals{j} = vals{j}*(2/(M-m));
     end
     % Set row 
     betaGradient = blkdiag(vals{1:end});
@@ -117,7 +119,7 @@ function [betaGradient] = betaDerivatives(betas, X, links,dims)
     
 end
 
-function [mus] = meanValues(X, betas, links)
+function [mus] = meanValues(X, betas, links, minMax)
 % [mus] = meanValues(X, betas, links) computes the current 
 % fitted mean values for using the given design matrices X  = {x_1, ..,
 % x_k}, linear predictors betas = {beta_1, ..., beta_k}
@@ -130,7 +132,8 @@ for i=1:K
     
     link = links{i};
     XB = X{i}* betas{i};
-    
+    minmax = minMax{i};
+    [m, M] = deal(minmax(1),minmax(2));
     switch link
         case 'id'
             mus{i} = XB;
@@ -141,5 +144,6 @@ for i=1:K
         case 'logit'
             mus{i} = exp(XB)./(1 +  exp(XB));
     end
+    mus{i} = (mus{i}-(m + M)/2)*(2/(M-m))  ;
 end
 end
