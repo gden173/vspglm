@@ -39,8 +39,9 @@ This is only temporary, and will have to be rerun every `MATLAB` session that yo
 Examples usages can be found in `examples`. 
 
 ```
->> % Two way drug trial data (Rossner 2006)
-responseOne = [ones(1, 22  + 18), zeros(1,4), ones(1, 8), zeros(1, 15)].';
+% Two way drug trial data (Rossner 2006)
+
+>>  responseOne = [ones(1, 22  + 18), zeros(1,4), ones(1, 8), zeros(1, 15)].';
 responseTwo = [ones(1, 22  +18), ones(1,4), zeros(1, 8), zeros(1, 15)].';
 treatment = [ones(1, 22), zeros(1, 22),ones(1, 6),...
     zeros(1, 2), ones(1, 6), zeros(1, 9) ].';
