@@ -9,19 +9,17 @@ More information on this function can be found [here](https://github.com/gden173
 
 This function uses `MATLABs` Optimization toolbox and `MATLAB >= 2019b`.  
 
-To use the function,  clone the repository  and add the function to your `MATLABPATH`
-
+To use the function,  first clone the repository 
 ```bash
 $ git clone https://github.com/gden173/vspglm.git
 ```
+Then open `MATLAB` and run the command `>> cd /path/to/vspglm`  and run the following command in the command window
 
-Then open this as your current working directory in `MATLAB` and run the following command in the command window
-
-```matlab
+```matlab 
 >> addpath('src', '-end')
 ```
 
-This should add the `vspglm` function to your `MATLABPATH` variable.  This can be checked by running
+This should add the `vspglm` function to the end of  your `MATLABPATH` variable.  This can be checked by running
 
 ```
 >> matlabpath
@@ -32,16 +30,8 @@ This should add the `vspglm` function to your `MATLABPATH` variable.  This can b
 		.
 
 	/path/to/vspglm
-```
-Where the path to the cloned directory should be at the end of the `matlabpath` environment variable.  
-This is only temporary, and will have to be rerun every `MATLAB` session.
-To run the scripts in the examples directory,  while in the same directory run 
-
-```matlab
->> addpath('examples', '-end')
-```
-
-from the command  window.
+```  
+This is only temporary, and will have to be rerun every `MATLAB` session that you want to use this function.
 
 
 ## Examples
