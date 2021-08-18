@@ -87,6 +87,8 @@ once the `src` directory has been added to path.
 ## Directory Structure
 
 ```
+📦docs
+ ┣ 📜thesis.pdf
 📦examples
  ┣ 📜blood_clot.m
  ┣ 📜burns.m
