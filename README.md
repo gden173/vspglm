@@ -36,7 +36,12 @@ This is only temporary, and will have to be rerun every `MATLAB` session that yo
 
 ## Examples
 
-Examples usages can be found in `examples`. The basic usage of the `fit_vspglm` function can be found by searching some of the documentation.
+Examples usages can be found in `examples`. 
+
+
+
+The basic usage of the `fit_vspglm` function can be found by searching some of the documentation
+once the `src` directory has been added to path. 
 ```matlab
 >> help fit_vspglm
   vspglm_mmodel = fit_vspglm(formula, tbl,  links)
@@ -68,7 +73,7 @@ Examples usages can be found in `examples`. The basic usage of the `fit_vspglm` 
   The last argument is then links, a 1 x k cell array of the link
   functions to be used for each model.
 ```
-once the `src` directory has been added to path. 
+
 
 
 
