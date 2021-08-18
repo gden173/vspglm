@@ -21,7 +21,7 @@ Then open `MATLAB` and run the command `>> cd /path/to/vspglm`  and run the foll
 
 This should add the `vspglm` function to the end of  your `MATLABPATH` variable.  This can be checked by running
 
-```
+```matlab
 >> matlabpath
 
 		MATLABPATH
@@ -38,7 +38,7 @@ This is only temporary, and will have to be rerun every `MATLAB` session that yo
 
 Examples usages can be found in `examples`. 
 
-```
+```matlab
 % Two way drug trial data (Rossner 2006)
 
 >>  responseOne = [ones(1, 22  + 18), zeros(1,4), ones(1, 8), zeros(1, 15)].';
@@ -166,4 +166,4 @@ once the `src` directory has been added to path.
 ```
 
 ## Author
-* @gdenn173
+* @gden173
