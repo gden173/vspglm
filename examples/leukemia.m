@@ -1,6 +1,3 @@
-clc;clear;rehash;
-% Add the function to path
-addpath(genpath('C:\Users\gabri\Dropbox\sem2_2020\honours\code\vspglm\src'))
 %% LEUKEMIA SURVIVAL TIMES from Davison and Hinkley (1997)
 x1 =[1 0 3.36 0;
      1 0 2.88 0;
@@ -38,4 +35,7 @@ x1 =[1 0 3.36 0;
  
  y = [65; 156; 100; 134; 16; 108; 121; 4; 39; 143; 56; 26; 22; 1; 1; 5;
      65; 56; 65; 17; 7; 16; 22; 3; 4; 2; 3; 8; 4;3; 30; 4; 43];
-leuk_model = fit_vspglm({y}, {x1(:, 2:end)}, {'log'});
+ %%
+tbl = [table(y), table(x1(:, 2), x1(:, 3), x1(:, 4))];
+leuk_model = fit_vspglm(["y ~ (Var1, Var2, Var3)"], tbl, {'log'});
+leuk_model.coefficients
