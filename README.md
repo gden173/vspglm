@@ -38,6 +38,52 @@ This is only temporary, and will have to be rerun every `MATLAB` session that yo
 
 Examples usages can be found in `examples`. 
 
+```
+>> % Two way drug trial data (Rossner 2006)
+responseOne = [ones(1, 22  + 18), zeros(1,4), ones(1, 8), zeros(1, 15)].';
+responseTwo = [ones(1, 22  +18), ones(1,4), zeros(1, 8), zeros(1, 15)].';
+treatment = [ones(1, 22), zeros(1, 22),ones(1, 6),...
+    zeros(1, 2), ones(1, 6), zeros(1, 9) ].';
+treatmentTwo = [zeros(1, 22), ones(1, 22),zeros(1, 6),...
+    ones(1, 2), zeros(1, 6), ones(1, 9) ].';
+
+Y = {table(responseOne), table(responseTwo)};
+X = {table(treatment), table(treatmentTwo)};
+tbl = [table(responseOne), table(responseTwo),...
+    table(treatment), table(treatmentTwo)];
+
+links = {'logit','logit'};
+formula = ["responseOne ~ treatment ", "responseTwo ~ treatmentTwo"];
+model = fit_vspglm(formula, tbl,  links);
+model.coefficients % Extract the models
+
+
+Elapsed time is 0.246267 seconds.
+Convergence Flag:2 
+ 
+ans =
+
+  2×5 table
+
+                     estimates            StdError              tValue               pValue          signif
+                 _________________    _________________    ________________    __________________    ______
+
+    Intercept    0.430782931903948    0.351328234396844    1.22615517265076     0.224563916326621    {'  '}
+    treatment     1.10966216041655    0.578523718291602    1.91809276842342    0.0594940404964799    {'.' }
+
+
+ans =
+
+  2×5 table
+
+                        estimates             StdError              tValue                pValue          signif
+                    __________________    _________________    _________________    __________________    ______
+
+    Intercept        0.606135746977055    0.358628710254868     1.69014841713674    0.0957904805233296    {'.' }
+    treatmentTwo    0.0870114481169803    0.514949031091377    0.168970991036859     0.866344189568936    {'  '}
+
+>> 
+```
 
 
 The basic usage of the `fit_vspglm` function can be found by searching some of the documentation
