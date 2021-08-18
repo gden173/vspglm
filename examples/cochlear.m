@@ -1,6 +1,4 @@
-clc;clear;rehash;
-% Add the function to path
-addpath(genpath('C:\Users\gabri\Dropbox\sem2_2020\honours\code\vspglm\src'))
+%% Currently not working
 %% 12-D Cochlear Example
 
 % Import the data

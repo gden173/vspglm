@@ -1,6 +1,4 @@
-clc;clear;rehash;
-% Add the function to path
-addpath(genpath('C:\Users\gabri\Dropbox\sem2_2020\honours\code\vspglm\src'))
+
 %% MINE FRACTURE DATSET from Myers et. al. (2010)
 x1 = [50,230,125,75,70,65,65,350,350,160,145,145,180,43,42,42,45,83,300,...
     190,145,510,65,470,300,275,420,65,40,900,95,40,140,150,80,80,145,100,...
