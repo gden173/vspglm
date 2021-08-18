@@ -5,7 +5,7 @@ in Joint Estimation of the Mean and Error Distribution in Generalized Linear Mod
 
 ## Usage
 
-This function requires `MATLABs` Optimization toolbox.  
+This function uses `MATLABs` Optimization toolbox and `MATLAB >= 2019b'.  
 
 To use the function,  clone the repository  and add the function to your `MATLABPATH`
 
