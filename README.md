@@ -3,6 +3,10 @@ All MATLAB Code and examples related to a Semi-Parametric Vector Generalized Lin
  The univariate case of this method was first proposed by Huang (2014) 
 in Joint Estimation of the Mean and Error Distribution in Generalized Linear Models https://doi.org/10.1080/01621459.2013.824892
 
+
+
+More information on this function can be found [here](https://github.com/gden173/vspglm/blob/main/docs/thesis.pdf)
+
 ## Usage
 
 This function uses `MATLABs` Optimization toolbox and `MATLAB >= 2019b`.  
