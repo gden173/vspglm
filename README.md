@@ -25,10 +25,14 @@ This should add the `vspglm` function to your `MATLABPATH` variable.  This can b
 >> matlabpath
 
 		MATLABPATH
+		.
+		.
+		.
 
 	/path/to/vspglm
 ```
-
+Where the path to the cloned directory should be at the end of the `matlabpath` environment variable.  
+This is only temporary, and will have to be rerun every `MATLAB` session.
 To run the scripts in the examples directory,  while in the same directory run 
 
 ```matlab
@@ -40,7 +44,39 @@ from the command  window.
 
 ## Examples
 
-Examples usages can be found in `examples`.
+Examples usages can be found in `examples`. The basic usage of the `fit_vspglm` function can be found by searching some of the documentation.
+```matlab
+>> help fit_vspglm
+  vspglm_mmodel = fit_vspglm(formula, tbl,  links)
+  fits a vector generalized semi-parametric linear model and stores
+  the model output in vspglmmodel
+  the function currently takes 3 arguments,
+  formula, a string array of string formulas 
+  In the formula argument:
+             (y1, y2) ~ (x1, x3) -> y1 and y2 share all regression
+             coefficients
+             (y1, y2) ~ (x1, x3|x4) -> y1 and y2 share all 
+             regression coefficients except for the coefficeint to x3 
+             (y1) and x4 (y2)
+  Responses can also  have a different number of covariates and still 
+  share regression coefficients. To add another covariate use the
+  notation (x2&x2|x3) and (0|0|x5), i.e
+           (y1, y2, y3) ~ (x1,(x2&x2|x3), (0|0|x4))
+  This means that 
+                 y1 ~ 1  + x1  + x2
+                 y2 ~ 1  + x1  + x2
+                 y3 ~ 1  + x1  + x3  + x4
+  Where the regression coefficients beta_0 and beta_1  
+  shared amongst all three models, with beta_2 shared amongs y1 and y2
+  and beta_3 and beta_4 unique to y3. For shared regression
+  coefficients across different covariates use x1==x3
+ 
+  Where each variable y1, .., yk, x1, .., xp are columns in 
+  the table argument tbl. 
+  The last argument is then links, a 1 x k cell array of the link
+  functions to be used for each model.
+```
+once the `src` directory has been added to path. 
 
 
 
