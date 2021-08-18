@@ -1,0 +1,14 @@
+*.Rproj.user
+*.Rhistory
+*.RData
+*.Ruserdata
+/analysis/*
+/simulations/*
+/examples/*.mat
+/examples/*/
+*.mat
+*.PNG
+*latexTable.m
+*clusterIris.m
+*simulations.m
+*Test.m
