@@ -7,7 +7,7 @@ function vspglmmodel = fit_vspglm(formula, tbl, links)
     % In the formula argument:
     %            (y1, y2) ~ (x1, x3) -> y1 and y2 share all regression
     %            coefficients
-    %            (y1, y2) ~ (x1, x3|x4) -> y1 and y2 share all 
+    %            (y1, y2) ~ (x1, (x3|x4)) -> y1 and y2 share all 
     %            regression coefficients except for the coefficeint to x3 
     %            (y1) and x4 (y2)
     % Responses can also  have a different number of covariates and still 
