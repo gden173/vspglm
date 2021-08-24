@@ -59,26 +59,22 @@ Examples usages can be found in `examples`. The basic usage of the `fit_vspglm` 
   In the formula argument:
              (y1, y2) ~ (x1, x3) -> y1 and y2 share all regression
              coefficients
-             (y1, y2) ~ (x1, (x3|x4)) -> y1 and y2 share all 
-             regression coefficients except for the coefficeint to x3 
-             (y1) and x4 (y2)
+             (y1, y2) ~ (x1, (x2&0), (0&x3)) 
+             -> y1 ~ x1 + x2, y2 ~ x1 + x3
   Responses can also  have a different number of covariates and still 
-  share regression coefficients. To add another covariate use the
-  notation (x2&x2|x3) and (0|0|x5), i.e
-           (y1, y2, y3) ~ (x1,(x2&x2|x3), (0|0|x4))
+  share regression coefficients. 
+           (y1, y2, y3) ~ (x1,(x2&x2&0), (0&0&x3))
   This means that 
                  y1 ~ 1  + x1  + x2
                  y2 ~ 1  + x1  + x2
-                 y3 ~ 1  + x1  + x3  + x4
-  Where the regression coefficients beta_0 and beta_1  
-  shared amongst all three models, with beta_2 shared amongs y1 and y2
-  and beta_3 and beta_4 unique to y3. For shared regression
-  coefficients across different covariates use x1==x3
+                 y3 ~ 1  + x1  + x3    
  
   Where each variable y1, .., yk, x1, .., xp are columns in 
   the table argument tbl. 
   The last argument is then links, a 1 x k cell array of the link
   functions to be used for each model.
+
+>> 
 ```
 once the `src` directory has been added to path. 
 
