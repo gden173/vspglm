@@ -1,17 +1,31 @@
 #  vspglm
-All MATLAB Code and examples related to a Semi-Parametric Vector Generalized Linear Model Solver.
- The univariate case of this method was first proposed by Huang (2014) 
-in Joint Estimation of the Mean and Error Distribution in Generalized Linear Models https://doi.org/10.1080/01621459.2013.824892
 
+<!--toc:start-->
+- [vspglm](#vspglm)
+  - [Description](#description)
+  - [Usage](#usage)
+  - [Examples](#examples)
+  - [Docs](#docs)
+  - [Author](#author)
+<!--toc:end-->
 
+## Description
 
-More information on this function can be found [here](https://github.com/gden173/vspglm/blob/main/docs/thesis.pdf)
+All MATLAB Code and examples related to a Semi-Parametric Vector Generalized
+Linear Model Solver. The univariate case of this method was first proposed by
+Huang (2014) in Joint Estimation of the Mean and Error Distribution in
+Generalized Linear Models https://doi.org/10.1080/01621459.2013.824892
+
+![Sorbinal Example PMFs](examples/sorbinil_pmfs.png)
+_Example of multivariate PMFs for the sorbinil dataset (See Examples)_
+
+More information on this function can be found [here](docs/thesis.pdf)
 
 ## Usage
 
 This function uses `MATLABs` Optimization toolbox and `MATLAB >= 2019b`.  
 
-To use the function,  clone the repository  and add the function to your `MATLABPATH`
+To use the function, clone the repository and add the function to your `MATLABPATH`
 
 ```bash
 $ git clone https://github.com/gden173/vspglm.git
@@ -43,12 +57,17 @@ To run the scripts in the examples directory,  while in the same directory run
 >> addpath('examples', '-end')
 ```
 
-from the command  window.
+from the command window.
 
 
 ## Examples
 
-Examples usages can be found in `examples`. The basic usage of the `fit_vspglm` function can be found by searching some of the documentation.
+<details>
+    <summary>
+Examples usages can be found in `examples`. The basic usage of the `fit_vspglm`
+function can be found by searching some of the documentation.
+</summary>
+
 ```matlab
 >> help fit_vspglm
   vspglm_mmodel = fit_vspglm(formula, tbl,  links)
@@ -77,49 +96,13 @@ Examples usages can be found in `examples`. The basic usage of the `fit_vspglm` 
 >> 
 ```
 once the `src` directory has been added to path. 
+</details>
 
+## Docs 
 
-
-## Directory Structure
-
-```
-📦examples
- ┣ 📜blood_clot.m
- ┣ 📜burns.m
- ┣ 📜burns.txt
- ┣ 📜butterfly.m
- ┣ 📜butterfly_data.mat
- ┣ 📜butterfly_X.xlsx
- ┣ 📜butterfly_y.xlsx
- ┣ 📜cochlear.m
- ┣ 📜cochlear.xlsx 
- ┣ 📜hospital.csv
- ┣ 📜hospital.m
- ┣ 📜hunua.m
- ┣ 📜hunua.txt
- ┣ 📜iris.m
- ┣ 📜leukemia.m
- ┣ 📜mine_fracture.m
- ┣ 📜rossner.m
- ┣ 📜simulations.m
- ┣ 📜twoway.m
- ┣ 📜UN.m
- ┣ 📜UN2.txt
-📦src 
- ┣ 📜constraints.m
- ┣ 📜extractParam.m
- ┣ 📜fit_vspglm.m
- ┣ 📜logLikelihood.m
- ┣ 📜meanConstraints.m
- ┣ 📜normConstraints.m
- ┣ 📜vcov.m
- ┣ 📜vspglm.m
- ┣ 📜VSPGLMFormula.m 
--📜.gitignore
--📜 README.md
-```
+For the technical implementation of the model, 
+see the [documentation](docs/thesis.pdf).
 
 ## Author
-* @gdenn173
-=======
->>>>>>> 
+
+* Gabriel Dennis (@gden173)
